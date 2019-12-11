@@ -1,172 +1,31 @@
 {
   "base_urls": [
     {
-      "url": "https://www.aljazeera.com/"
-    },
-    {
-      "url": "https://apnews.com/"
-    },
-    {
-      "url": "https://www.axios.com/"
-    },
-    {
-      "url": "https://www.bbc.com/news"
-    },
-    {
-      "url": "https://www.bloomberg.com/"
-    },
-    {
-      "url": "https://www.boston.com/"
-    },
-    {
-      "url": "https://www.bostonglobe.com/"
-    },
-    {
-      "url": "https://www.breitbart.com/"
-    },
-    {
-      "url": "https://www.cbsnews.com/"
-    },
-    {
-      "url": "https://www.chicagotribune.com/"
-    },
-    {
-      "url": "https://www.chron.com/"
-    },
-    {
-      "url": "https://www.cnbc.com/"
-    },
-    {
-      "url": "https://dailycaller.com/"
-    },
-    {
-      "url": "https://www.dailykos.com/"
-    },
-    {
-      "url": "https://drudgereport.com/"
-    },
-    {
-      "url": "https://www.economist.com/"
-    },
-    {
-      "url": "https://fivethirtyeight.com/"
-    },
-    {
-      "url": "https://www.forbes.com/"
-    },
-    {
-      "url": "https://www.foxnews.com/"
-    },
-    {
-      "url": "https://www.ft.com/"
-    },
-    {
-      "url": "https://www.independent.co.uk/us"
-    },
-    {
-      "url": "https://www.latimes.com/"
-    },
-    {
-      "url": "http://www.lawyersgunsmoneyblog.com/"
-    },
-    {
-      "url": "https://www.mediaite.com/"
-    },
-    {
-      "url": "https://www.miamiherald.com/"
-    },
-    {
-      "url": "https://www.motherjones.com/"
-    },
-    {
-      "url": "https://www.msnbc.com/"
-    },
-    {
-      "url": "https://www.nationalreview.com/"
-    },
-    {
-      "url": "https://www.nbcnews.com/"
-    },
-    {
-      "url": "https://www.npr.org/"
-    },
-    {
-      "url": "https://www.nytimes.com/"
-    },
-    {
-      "url": "https://www.politico.com/"
-    },
-    {
-      "url": "https://reason.com/"
-    },
-    {
-      "url": "https://www.reuters.com/"
-    },
-    {
-      "url": "https://www.rt.com/"
-    },
-    {
-      "url": "https://www.salon.com/"
-    },
-    {
-      "url": "https://slate.com/"
-    },
-    {
-      "url": "https://www.theatlantic.com/"
-    },
-    {
-      "url": "https://www.theblaze.com/"
+      "url": "https://www.newsmax.com/"
     },
     {
       "url": "https://www.thedailybeast.com/"
     },
     {
-      "url": "https://www.theguardian.com/us"
+      "url": "https://jacobinmag.com/"
     },
     {
-      "url": "https://thehill.com/"
+      "url": "https://www.rawstory.com/"
     },
     {
-      "url": "https://time.com/"
+      "url": "https://www.motherjones.com/"
     },
     {
-      "url": "https://www.huffpost.com/"
+      "url": "https://drudgereport.com/"
     },
     {
-      "url": "https://www.usatoday.com/"
+      "url": "https://dailycaller.com/"
     },
     {
-      "url": "https://nypost.com/"
+      "url": "https://www.nationalreview.com/"
     },
     {
-      "url": "https://www.denverpost.com/"
-    },
-    {
-      "url": "https://www.newsweek.com/"
-    },
-    {
-      "url": "https://www.usnews.com/"
-    },
-    {
-      "url": "https://chicago.suntimes.com/"
-    },
-    {
-      "url": "https://www.vox.com/"
-    },
-    {
-      "url": "https://www.washingtonexaminer.com/"
-    },
-    {
-      "url": "https://www.washingtonpost.com/"
-    },
-    {
-      "url": "https://www.washingtontimes.com/"
-    },
-    {
-      "url": "https://www.wnd.com/"
-    },
-    {
-      "url": "https://www.wsj.com/"
+      "url": "https://www.thenation.com/"
     }
   ]
 }

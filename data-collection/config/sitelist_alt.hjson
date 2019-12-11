@@ -1,0 +1,68 @@
+{
+  "base_urls": [
+    {
+      "url": "https://www.newsmax.com/"
+    },
+    {
+      "url": "https://www.thedailybeast.com/"
+    },
+    {
+      "url": "https://www.dallasnews.com/"
+    },
+    {
+      "url": "https://www.rawstory.com/"
+    },
+    {
+      "url": "https://www.motherjones.com/"
+    },
+    {
+      "url": "https://drudgereport.com/"
+    },
+    {
+      "url": "https://dailycaller.com/"
+    },
+    {
+      "url": "https://www.nationalreview.com/"
+    },
+    {
+      "url": "https://www.thenation.com/"
+    },
+    {
+      "url": "https://www.newsday.com/"
+    },
+    {
+      "url": "https://www.utne.com/"
+    },
+    {
+      "url": "https://prospect.org/"
+    },
+    {
+      "url": "https://www.redstate.com/"
+    },
+    {
+      "url": "https://www.powerlineblog.com/"
+    },
+    {
+      "url": "https://washingtonmonthly.com/"
+    },
+    {
+      "url": "https://pjmedia.com/"
+    },
+    {
+      "url": "https://www.americanthinker.com/"
+    },
+    {
+      "url": "https://www.cnsnews.com/"
+    },
+    {
+      "url": "https://www.dailywire.com/"
+    },
+    {
+      "url": "https://www.seattletimes.com/"
+    },
+    {
+      "url": "https://www.nydailynews.com/"
+    }
+
+  ]
+}
