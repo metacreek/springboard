@@ -1,0 +1,118 @@
+{
+  "base_urls": [
+    {
+      "url": "https://www.ajc.com/"
+    },
+    {
+      "url": "https://www.americanthinker.com/"
+    },
+    {
+      "url": "https://www.boston.com/"
+    },
+    {
+      "url": "https://www.forbes.com/"
+    },
+    {
+      "url": "https://www.latimes.com/"
+    },
+    {
+      "url": "https://www.npr.org/"
+    },
+    {
+      "url": "https://www.nytimes.com/"
+    },
+    {
+      "url": "https://reason.com/"
+    },
+    {
+      "url": "https://thehill.com/"
+    },
+    {
+      "url": "https://apnews.com/"
+    },
+    {
+      "url": "https://www.axios.com/"
+    },
+    {
+      "url": "https://www.bbc.com/news"
+    },
+    {
+      "url": "https://www.breitbart.com/"
+    },
+    {
+      "url": "https://www.cbsnews.com/"
+    },
+    {
+      "url": "https://www.chicagotribune.com/"
+    },
+    {
+      "url": "https://www.chron.com/"
+    },
+    {
+      "url": "https://www.cnbc.com/"
+    },
+    {
+      "url": "https://www.dallasnews.com/"
+    },
+    {
+      "url": "https://www.denverpost.com/"
+    },
+    {
+      "url": "https://www.economist.com/"
+    },
+    {
+      "url": "https://www.foxnews.com/"
+    },
+    {
+      "url": "https://www.ft.com/"
+    },
+    {
+      "url": "https://www.msnbc.com/"
+    },
+    {
+      "url": "https://www.nbcnews.com/"
+    },
+    {
+      "url": "https://www.newsday.com/"
+    },
+        {
+      "url": "https://www.nydailynews.com/"
+    },
+        {
+      "url": "https://prospect.org/"
+    },
+    {
+      "url": "https://www.rt.com/"
+    },
+    {
+      "url": "https://www.seattletimes.com/"
+    },
+    {
+      "url": "https://slate.com/"
+    },
+    {
+      "url": "https://www.theatlantic.com/"
+    },
+    {
+      "url": "https://www.theblaze.com/"
+    },
+    {
+      "url": "https://time.com/"
+    },
+    {
+      "url": "https://www.washingtonexaminer.com/"
+    },
+    {
+      "url": "https://www.washingtonpost.com/"
+    },
+    {
+      "url": "https://www.washingtontimes.com/"
+    },
+    {
+      "url": "https://www.wnd.com/"
+    },
+    {
+      "url": "https://www.wsj.com/"
+    }
+  ]
+}

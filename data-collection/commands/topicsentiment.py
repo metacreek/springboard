@@ -14,6 +14,8 @@ def create_config_file(before=10, user_agent='default', sitelist='sitelist'):
         for line in infile:
             if line.startswith('start_date'):
                 line = f"start_date = '{start_date(before)} 00:00:00'\n"
+            elif line.startswith('end_date'):
+                line = f"end_date = '{start_date(-10)} 00:00:00'\n"
             elif line.startswith('LOG_FILE'):
                 line = f"LOG_FILE = '{BASEDIR}/log_{start_date()}_{user_agent}_{sitelist}_{before}.txt'\n"
             elif line.startswith('USER_AGENT'):

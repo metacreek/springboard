@@ -1,0 +1,61 @@
+{
+  "base_urls": [
+    {
+      "url": "https://www.ajc.com/"
+    },
+    {
+      "url": "https://www.americanthinker.com/"
+    },
+    {
+      "url": "https://www.boston.com/"
+    },
+    {
+      "url": "https://www.forbes.com/"
+    },
+    {
+      "url": "https://www.latimes.com/"
+    },
+    {
+      "url": "https://www.npr.org/"
+    },
+    {
+      "url": "https://www.nytimes.com/"
+    },
+    {
+      "url": "https://reason.com/"
+    },
+    {
+      "url": "https://thehill.com/"
+    },
+    {
+      "url": "https://chicago.suntimes.com/"
+    },
+    {
+      "url": "https://fivethirtyeight.com/"
+    },
+    {
+      "url": "https://www.newsmax.com/"
+    },
+    {
+      "url": "https://nypost.com/"
+    },
+    {
+      "url": "https://www.reuters.com/"
+    },
+    {
+      "url": "https://www.thenation.com/"
+    },
+    {
+      "url": "https://www.utne.com/"
+    },
+    {
+      "url": "https://www.vox.com/"
+    },
+    {
+      "url": "https://www.washingtonpost.com/"
+    },
+    {
+      "url": "https://www.wsj.com/"
+    }
+  ]
+}
