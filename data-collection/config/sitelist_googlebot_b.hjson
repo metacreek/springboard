@@ -1,0 +1,64 @@
+{
+  "base_urls": [
+    {
+      "url": "https://www.foxnews.com/"
+    },
+    {
+      "url": "https://www.ft.com/"
+    },
+    {
+      "url": "https://www.msnbc.com/"
+    },
+    {
+      "url": "https://www.nbcnews.com/"
+    },
+    {
+      "url": "https://www.newsday.com/"
+    },
+        {
+      "url": "https://www.nydailynews.com/"
+    },
+        {
+      "url": "https://prospect.org/"
+    },
+    {
+      "url": "https://www.rt.com/"
+    },
+    {
+      "url": "https://www.seattletimes.com/"
+    },
+    {
+      "url": "https://slate.com/"
+    },
+    {
+      "url": "https://www.theatlantic.com/"
+    },
+    {
+      "url": "https://www.theblaze.com/"
+    },
+    {
+      "url": "https://time.com/"
+    },
+    {
+      "url": "https://www.washingtonexaminer.com/"
+    },
+    {
+      "url": "https://www.washingtonpost.com/"
+    },
+    {
+      "url": "https://www.washingtontimes.com/"
+    },
+    {
+      "url": "https://www.wnd.com/"
+    },
+    {
+      "url": "https://www.wsj.com/"
+    },
+    {
+      "url": "https://foreignpolicy.com/"
+    },
+    {
+      "url": "https://newrepublic.com/"
+    }
+  ]
+}
