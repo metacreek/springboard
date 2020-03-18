@@ -3,7 +3,7 @@
 
 ### Submitting feature extraction including Spark NLP
 gcloud dataproc jobs submit pyspark \
-    --properties spark.jars.packages=com.johnsnowlabs.nlp:spark-nlp_2.11:2.4.1 \
+    --properties spark.jars.packages=com.johnsnowlabs.nlp:spark-nlp_2.11:2.4.4 \
     --cluster features1 --region us-east1 \
     gs://topic-sentiment-1/code/features.py
 

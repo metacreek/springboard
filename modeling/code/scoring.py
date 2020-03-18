@@ -3,7 +3,7 @@ from datetime import datetime
 import numpy as np
 from pyspark.ml.feature import CountVectorizerModel
 
-VER = '1percent-v1'
+VER = 'sentence-1percent'
 
 spark = (SparkSession.builder
         .config("spark.debug.maxToStringFields", 100)

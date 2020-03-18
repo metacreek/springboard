@@ -26,7 +26,7 @@ gcloud dataproc clusters create features1 \
   --num-workers 5 \
   --master-boot-disk-size 600 --worker-boot-disk-size 600 \
   --initialization-actions gs://goog-dataproc-initialization-actions-us-east1/python/pip-install.sh \
-  --metadata 'PIP_PACKAGES=spark-nlp==2.4.1 contractions'
+  --metadata 'PIP_PACKAGES=spark-nlp==2.4.4 contractions'
 
 ### Setup for SSDs
 gcloud dataproc clusters create features1 \
@@ -35,7 +35,7 @@ gcloud dataproc clusters create features1 \
   --worker-boot-disk-type=pd-ssd \
   --worker-boot-disk-size 100 \
   --initialization-actions gs://goog-dataproc-initialization-actions-us-east1/python/pip-install.sh \
-  --metadata 'PIP_PACKAGES=spark-nlp==2.4.1 contractions'
+  --metadata 'PIP_PACKAGES=spark-nlp==2.4.4 contractions'
 
 ## Modeling clusters for Keras and Tensorflow
 
@@ -56,6 +56,7 @@ gcloud dataproc clusters create model1 \
   --worker-boot-disk-size 600   \
   --initialization-actions gs://goog-dataproc-initialization-actions-us-east1/python/pip-install.sh   \
   --metadata 'PIP_PACKAGES=keras==2.3.1 tensorflow==2.1.0'
+
 
 # For building a custom image
 
