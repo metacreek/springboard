@@ -11,6 +11,13 @@ gcloud dataproc clusters create features1 \
   --initialization-actions gs://goog-dataproc-initialization-actions-us-east1/python/pip-install.sh \
   --metadata 'PIP_PACKAGES=spark-nlp==2.4.1 contractions'
 
+### alternate for bert approach  
+gcloud dataproc clusters create features1 \
+  --image-version 1.4.22-debian9 \
+  --single-node  \
+  --initialization-actions gs://goog-dataproc-initialization-actions-us-east1/python/pip-install.sh \
+  --metadata 'PIP_PACKAGES=tensorflow==2.0.0 pyarrow==0.15.1 sentencepiece==0.1.85 gcsfs nltk tensorflow-hub tables bert-for-tf2 absl-py google-cloud-storage'  
+
 ### Setup allowing Jupyter usage
 gcloud beta dataproc clusters create classic1 \
   --image-version 1.4.22-debian9 \
@@ -24,9 +31,18 @@ gcloud beta dataproc clusters create classic1 \
 gcloud dataproc clusters create features1 \
   --image-version 1.4.22-debian9 \
   --num-workers 5 \
+  --initialization-actions gs://goog-dataproc-initialization-actions-us-east1/python/pip-install.sh \
+  --metadata 'PIP_PACKAGES=spark-nlp==2.4.4 contractions'
+
+
+
+### Setup for limited disk quota
+gcloud dataproc clusters create features1 \
+  --image-version 1.4.22-debian9 \
+  --num-workers 5 \
   --master-boot-disk-size 600 --worker-boot-disk-size 600 \
   --initialization-actions gs://goog-dataproc-initialization-actions-us-east1/python/pip-install.sh \
-  --metadata 'PIP_PACKAGES=spark-nlp==2.4.1 contractions'
+  --metadata 'PIP_PACKAGES=spark-nlp==2.4.4 contractions'
 
 ### Setup for SSDs
 gcloud dataproc clusters create features1 \
