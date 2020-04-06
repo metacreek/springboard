@@ -14,7 +14,9 @@ gcloud dataproc clusters create features1 \
 ### alternate for bert approach  
 gcloud dataproc clusters create features1 \
   --image-version 1.4.22-debian9 \
-  --single-node  \
+  --num-workers 2 \
+  --master-machine-type n1-highmem-4 \
+  --worker-machine-type n1-highmem-4 \
   --initialization-actions gs://goog-dataproc-initialization-actions-us-east1/python/pip-install.sh \
   --metadata 'PIP_PACKAGES=tensorflow==2.0.0 pyarrow==0.15.1 sentencepiece==0.1.85 gcsfs nltk tensorflow-hub tables bert-for-tf2 absl-py google-cloud-storage'  
 
@@ -52,6 +54,29 @@ gcloud dataproc clusters create features1 \
   --worker-boot-disk-size 100 \
   --initialization-actions gs://goog-dataproc-initialization-actions-us-east1/python/pip-install.sh \
   --metadata 'PIP_PACKAGES=spark-nlp==2.4.1 contractions'
+  
+  
+### Setup AI instance
+gcloud compute instances create model1 \
+        --zone=us-east1-c \
+        --image-family=tf-latest-cu92 \
+        --image-project=deeplearning-platform-release \
+        --maintenance-policy=TERMINATE \
+        --accelerator="type=nvidia-tesla-t4,count=1" \
+        --machine-type=n1-standard-8 \
+        --metadata="install-nvidia-driver=True"  
+
+
+gcloud compute instances create model1 \
+        --zone=us-east1-c \
+        --image-family=tf-latest-cu92 \
+        --image-project=topic-sentiment-269614 \
+        --maintenance-policy=TERMINATE \
+        --accelerator="type=nvidia-tesla-t4,count=1" \
+        --machine-type=n1-standard-8 \
+        --metadata="install-nvidia-driver=True"  
+
+gcloud compute --project=topic-sentiment-269614 instances get-serial-port-output model1 --zone=us-east1-c
 
 ## Modeling clusters for Keras and Tensorflow
 
