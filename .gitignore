@@ -4,6 +4,7 @@
 # work dir
 experiment/
 api/model5c/
+api-resources/
 
 
 # Byte-compiled / optimized / DLL files

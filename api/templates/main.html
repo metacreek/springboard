@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Centering an Element on the Page</title>
+  <link rel="stylesheet" href="{{url_for('static', filename='templates.css')}}">
+  <link href="https://fonts.googleapis.com/css2?family=PT+Sans&family=PT+Sans+Narrow:wght@700&display=swap" rel="stylesheet">
+<link rel="apple-touch-icon" sizes="180x180" href="{{url_for('static', filename='apple-touch-icon.png')}}">
+<link rel="icon" type="image/png" sizes="32x32" href="{{url_for('static', filename='favicon-32x32.png')}}">
+<link rel="icon" type="image/png" sizes="16x16" href="{{url_for('static', filename='favicon-16x16.png')}}">
+<link rel="manifest" href="/site.webmanifest">
+</head>
+<body>
+
+<div class="grid">
+  <header>
+    Text Identification with Bert and Deep Learning
+  </header>
+  <aside class="sidebar-left">
+    <a href="https://github.com/metacreek/springboard">code on github</a>
+    <a href="https://www.linkedin.com/in/haroldneal/">linked in</a>
+    <a href="https://springboard.com">springboard</a>
+
+  </aside>
+
+
+  <article>
+
+    {% if results %}
+      <h2>Results</h2>
+        <section>
+
+            <table>
+                <tr><th>Publication</th><th>Likelihood</th></tr>
+       {% for item in results %}
+                {% if item[0] > 10 %}
+                <tr><td>{{ item[2] }}</td><td>{{ item[0]|int }}%</td></tr>
+                {% endif %}
+            {% endfor %}
+            </table>
+    </section>
+    {% endif %}
+      <h2>Try it out!</h2>
+    <section>
+      Enter the first few paragraphs from a news article.
+    For best results, use articles from one of the websites used in
+      training.
+    </section>
+    <section>
+<div class="menu-wrapper">
+      <ul class="nav">
+        <li>
+          <a href="#">select website</a>
+          <div>
+            {% for i in range(columns) %}
+            <div class="nav-column">
+              <ul>
+                {% for j in range(items) %}
+                {% set idx = i * items + j %}
+                {% if idx < length %}
+        {% set link = sites[idx] %}
+
+                <li class="link"><a href="https://{{ link }}" target="_blank">{{ link }}</a></li>
+{% endif %}
+                {% endfor %}
+              </ul>
+            </div>
+            {% endfor %}
+
+
+
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    </section>
+    <section>
+
+      <form action="/" >
+        <textarea id="para" rows="25" cols="120" name="text" >{{ text }}</textarea>
+
+        <div>
+          <input type="submit" class="button" />
+          <input type="reset" class="button" onclick="window.location.href='/'"/>
+        </div>
+      </form>
+
+    </section>
+
+  </article>
+
+  <aside class="sidebar-right">
+  </aside>
+
+  <footer>
+    Built on Google Cloud
+  </footer>
+</div>
+</body>
+</html>

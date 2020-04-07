@@ -3,24 +3,38 @@ import pickle
 import numpy as np
 import nltk
 from nltk.corpus import stopwords
+from flask import render_template
 
-MODEL_PATH = 'model5c'
-TOKENIZER_PATH = 'tokenizer.pickle'
+#PATH_PREFIX = "gs://topic-sentiment-1/models/"  # for deploy
+PATH_PREFIX = "../api-resources/"  # for local
+MODEL_PATH = f'{PATH_PREFIX}/model5c'
+TOKENIZER_PATH = f'{PATH_PREFIX}/tokenizer.pickle'
 MAX_SEQ_LEN = 256
 
+model = None
+tokenizer = None
+stop_words = None
+
 def get_model():
-    model = tf.keras.models.load_model(MODEL_PATH)
+    global model
+    if not model:
+        model = tf.keras.models.load_model(MODEL_PATH)
     return model
 
 
 def get_tokenizer():
+    global tokenier
     with open(TOKENIZER_PATH, 'rb') as handle:
         tokenizer = pickle.load(handle)
     return tokenizer
 
 
 def get_stopwords():
+    global stop_words
     nltk.download('stopwords')
+    stop_words = set(stopwords.words('english'))
+    return stop_words
+
 
 
 lookup = {0: 'ajc.com',
@@ -72,6 +86,12 @@ lookup = {0: 'ajc.com',
           46: 'wsj.com'}
 
 
+sites = list(lookup.values())
+print(type(sites), sites)
+columns = 5
+length = len(sites)
+items = length // columns + 1
+
 def get_masks(tokens, max_seq_length):
     return [1]*len(tokens) + [0] * (max_seq_length - len(tokens))
 
@@ -94,8 +114,8 @@ def get_ids(tokens, max_seq_length):
 
 
 def create_single_input(sentence, MAX_LEN):
+    global stop_words
     stokens = tokenizer.tokenize(sentence)
-    stop_words = set(stopwords.words('english'))
     stokens = [token for token in stokens if not token in stop_words]
 
     stokens = stokens[:MAX_LEN]
@@ -110,6 +130,7 @@ def create_single_input(sentence, MAX_LEN):
 
 model = get_model()
 tokenizer = get_tokenizer()
+stop_words = get_stopwords()
 
 def get_next_highest(scores):
     print(type(scores), scores)
@@ -119,7 +140,8 @@ def get_next_highest(scores):
     return max, idx, scores
 
 def analyze(request):
-    text = None
+    results = []
+    text = ""
     request_json = request.get_json(silent=True)
     request_args = request.args
     if request_json and 'text' in request_json:
@@ -130,20 +152,19 @@ def analyze(request):
     print("@@@@@@@", text)
 
     if text:
+        print("text", text)
         ids, masks, segments = create_single_input(text, MAX_SEQ_LEN)
         inputs = [np.asarray([ids]), np.asarray([masks]), np.asarray([segments])]
         model = get_model()
         predictions = model.predict(inputs)
         predictions = predictions[0]
         print("@@@@", predictions)
-        results = []
+
         for i in range(1, 4):
             score, idx, predictions = get_next_highest(predictions)
-            results.append((score, idx, lookup[idx]))
+            results.append((score * 100, idx, lookup[idx]))
 
-        return str(results)
+    print("@@@@@", results)
+    return render_template('main.html', text=text, sites=sites, columns=5,
+                           length=length, items=items, results=results)
 
-    with open('home.html', 'rb') as handle:
-        response = handle.read()
-
-    return response
