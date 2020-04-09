@@ -1,12 +1,8 @@
-import pickle
 import numpy as np
-import nltk
-from nltk.corpus import stopwords
 from flask import render_template
 from oauth2client.client import GoogleCredentials
 from googleapiclient import discovery
 from googleapiclient import errors
-import importlib
 import json
 
 try:
@@ -14,9 +10,6 @@ try:
 except:
     import tokenizer as tok
 
-#PATH_PREFIX = "gs://topic-sentiment-1/models/"  # for deploy
-PATH_PREFIX = "../api-resources/"  # for local
-MODEL_PATH = f'{PATH_PREFIX}/model5c'
 MAX_SEQ_LEN = 256
 
 tokenator = None
@@ -30,8 +23,8 @@ def get_tokenizer():
 
 def get_stopwords():
     global stop_words
-    nltk.download('stopwords')
-    stop_words = set(stopwords.words('english'))
+    with open('stopwords', 'r') as f:
+        stop_words = f.read()
     return stop_words
 
 
@@ -149,6 +142,7 @@ def analyze(request):
 
     print("@@@@@@@", text)
 
+
     if text:
         print("text", text)
         ids, masks, segments = create_single_input(text, MAX_SEQ_LEN-2)
@@ -157,6 +151,7 @@ def analyze(request):
         print("segments", segments)
         inputs = [np.asarray([ids]), np.asarray([masks]), np.asarray([segments])]
         print("inputs", inputs)
+
 
         service = discovery.build('ml', 'v1')
         name = 'projects/topic-sentiment-269614/models/springboard_capstone_project'
@@ -191,4 +186,3 @@ def analyze(request):
     print("@@@@@", results)
     return render_template('main.html', text=text, sites=sites, columns=5,
                            length=length, items=items, results=results)
-
