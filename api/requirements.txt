@@ -1,6 +1,6 @@
-tensorflow==2.1.0
-google-cloud-logging==1.15.0
 functions-framework==1.2.0
-bert-for-tf2==0.13.5
-sentencepiece==0.1.85
 nltk==3.4.5
+google-api-python-client
+oauth2client
+numpy
+tokenization

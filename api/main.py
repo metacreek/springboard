@@ -1,32 +1,31 @@
-import tensorflow as tf
 import pickle
 import numpy as np
 import nltk
 from nltk.corpus import stopwords
 from flask import render_template
+from oauth2client.client import GoogleCredentials
+from googleapiclient import discovery
+from googleapiclient import errors
+import importlib
+import json
+
+try:
+    from . import tokenizer as tok
+except:
+    import tokenizer as tok
 
 #PATH_PREFIX = "gs://topic-sentiment-1/models/"  # for deploy
 PATH_PREFIX = "../api-resources/"  # for local
 MODEL_PATH = f'{PATH_PREFIX}/model5c'
-TOKENIZER_PATH = f'{PATH_PREFIX}/tokenizer.pickle'
 MAX_SEQ_LEN = 256
 
-model = None
-tokenizer = None
+tokenator = None
 stop_words = None
 
-def get_model():
-    global model
-    if not model:
-        model = tf.keras.models.load_model(MODEL_PATH)
-    return model
-
-
 def get_tokenizer():
-    global tokenier
-    with open(TOKENIZER_PATH, 'rb') as handle:
-        tokenizer = pickle.load(handle)
-    return tokenizer
+    global tokenator
+    tokenator = tok.FullTokenizer(vocab_file='vocab.txt', do_lower_case=True)
+    return tokenator
 
 
 def get_stopwords():
@@ -107,15 +106,15 @@ def get_segments(tokens, max_seq_length):
 
 def get_ids(tokens, max_seq_length):
     """Token ids from Tokenizer vocab"""
-    tokenizer = get_tokenizer()
-    token_ids = tokenizer.convert_tokens_to_ids(tokens,)
+    tokenator = get_tokenizer()
+    token_ids = tokenator.convert_tokens_to_ids(tokens,)
     input_ids = token_ids + [0] * (max_seq_length-len(token_ids))
     return input_ids
 
 
 def create_single_input(sentence, MAX_LEN):
     global stop_words
-    stokens = tokenizer.tokenize(sentence)
+    stokens = tokenator.tokenize(sentence)
     stokens = [token for token in stokens if not token in stop_words]
 
     stokens = stokens[:MAX_LEN]
@@ -128,8 +127,7 @@ def create_single_input(sentence, MAX_LEN):
 
     return ids, masks, segments
 
-model = get_model()
-tokenizer = get_tokenizer()
+tokenator = get_tokenizer()
 stop_words = get_stopwords()
 
 def get_next_highest(scores):
@@ -153,12 +151,38 @@ def analyze(request):
 
     if text:
         print("text", text)
-        ids, masks, segments = create_single_input(text, MAX_SEQ_LEN)
+        ids, masks, segments = create_single_input(text, MAX_SEQ_LEN-2)
+        print("ids", ids)
+        print("masks", masks)
+        print("segments", segments)
         inputs = [np.asarray([ids]), np.asarray([masks]), np.asarray([segments])]
-        model = get_model()
-        predictions = model.predict(inputs)
-        predictions = predictions[0]
+        print("inputs", inputs)
+
+        service = discovery.build('ml', 'v1')
+        name = 'projects/topic-sentiment-269614/models/springboard_capstone_project'
+        body = {
+            "instances": [{
+            "input_word_ids": ids,
+            "input_mask": masks,
+            "segment_ids": segments}]
+        }
+
+        # with open('input.json', 'r') as f:
+        #     body = json.load(f)
+
+        print('body', json.dumps(body))
+
+        response = service.projects().predict(
+            name=name, body=body
+        ).execute()
+        print(response)
+
+        if 'error' in response:
+            raise RuntimeError(response['error'])
+
+        predictions = response['predictions']
         print("@@@@", predictions)
+        predictions = predictions[0]['dense_output']
 
         for i in range(1, 4):
             score, idx, predictions = get_next_highest(predictions)
