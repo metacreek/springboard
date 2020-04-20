@@ -1,9 +1,8 @@
-try:
-    from . import topicsentiment as ts
-except:
-    import topicsentiment as ts
+import datacollection as dc
 import time
 
-while ts.count_crawlers() > 0:
-    ts.kill_crawlers()
+# Kill all existing crawler processes
+
+while dc.count_crawlers() > 0:
+    dc.kill_crawlers()
     time.sleep(5)

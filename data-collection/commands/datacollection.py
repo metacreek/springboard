@@ -2,15 +2,32 @@ from datetime import date, timedelta
 import os
 import re
 
+# This module contains utility functions for collection of news stories
+
+# Set BASEDIR to the home directory for data collection
 BASEDIR = '/home/ec2-user/news-please-repo'
 
 
 def start_date(before=0):
+    """
+    Returns a date as a string that is 'before' days before the current date
+    Used to specify the start_date in the config file for crawling
+
+    :param before: integer, default 0, how many days before now should the start_date be
+    """
     start = date.today() - timedelta(days=before)
     return str(start)
 
 
 def create_config_file(before=10, user_agent='default', sitelist='sitelist'):
+    """
+    Creates config.cfg from the base config_base.cfg file according to parameters.
+    Assumes the presence of BASEDIR/config/config_base.cfg
+
+    :param before: integer, number of days before today to set as the crawl start_date
+    :param user_agent: string, either 'google' for google crawler as user agent or 'default' for news-please user agent
+    :param sitelist: string, specifies which sitelist file to use
+    """
     with open(f'{BASEDIR}/config/config_base.cfg') as infile, open(f'{BASEDIR}/config/config.cfg', 'w') as outfile:
         for line in infile:
             if line.startswith('start_date'):
@@ -32,6 +49,9 @@ def create_config_file(before=10, user_agent='default', sitelist='sitelist'):
 
 
 def get_crawlers():
+    """
+    Returns list of process ids for crawler processes
+    """
     f = os.popen("ps ax | grep single_crawler | grep -v grep | cut -d ' '  -f 2", 'r', 10240)
     values = f.read().split('\n')
     if '' in values:
@@ -40,11 +60,17 @@ def get_crawlers():
 
 
 def count_crawlers():
+    """
+    Returns number of crawlers currently running
+    """
     p = get_crawlers()
     return len(p)
 
 
 def kill_crawlers():
+    """
+    Kills all crawler processes
+    """
     crawl = get_crawlers()
     for c in crawl:
         command = f'kill -9 {c}'
@@ -53,10 +79,16 @@ def kill_crawlers():
 
 
 def start_crawlers():
+    """
+    Starts the news-please crawling service in the background
+    """
     os.system('news-please &')
 
 
 def combine():
+    """
+    Combines individual story files from news-please into a single file
+    """
     with open(f'{BASEDIR}/config/config.cfg') as infile:
         for line in infile:
             if line.startswith('LOG_FILE'):
@@ -69,11 +101,4 @@ def combine():
                 else:
                     print("The output file name cannot be determined")
                     exit(-1)
-
-
-#
-
-
-
-
 

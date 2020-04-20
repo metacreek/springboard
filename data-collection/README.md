@@ -1,4 +1,6 @@
-This section of the repository contains code and instructions used to collect the JSON article files from a set of websites.
+This section of the repository contains code used to collect the JSON article files from a set of websites.
+
+The crawling is done using the [news-please](https://github.com/fhamborg/news-please) package.
 
 ## EC2 Configuration
 
@@ -9,6 +11,8 @@ Once the instance is created, get the public IP address and set an environment v
 Create rule(s) as necessary so that you have inbound ssh access from your local machine (port 22)
 
 The secret file is springboard.pem and is sorted in ~/.aws
+
+Set EC_CRAWLER to the IP address of your instance
 
 To connect to the crawler instance:
 
@@ -40,8 +44,7 @@ Currently, the crawler is run manually:
 
 In the following, my data is stored in the **topic-sentiment-1** S3 bucket.
 
-From the home directory on the crawler run:
+From the EC2 instance, in the commands sub-directory:
 
-    time aws s3 sync --only-show-errors --exclude "*.html" --exclude ".resume_jobdir/*" /home/ec2-user/news-please-repo/ s3://topic-sentiment-1
-
+    ./move_to_aws.sh
 
