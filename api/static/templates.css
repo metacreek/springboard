@@ -26,7 +26,7 @@ header,
 aside,
 article,
 footer {
-  padding: 1em;
+  padding: 10px;
 }
 
 section {
@@ -38,6 +38,7 @@ section {
 
 textarea {
   width: auto;
+  font-size: small;
 }
 
 header, footer {
@@ -57,10 +58,18 @@ header, footer {
   font-size: 16px;
 }
 
-td:first-child {
-  font-weight: bold;
+tbody tr:first-child td:first-child {
+  background: green;
+  color: white;
 }
 
+thead tr th:first-child {
+  text-align: left;
+}
+
+tbody tr td:last-child {
+  text-align: right;
+}
 
 ul .nav {
   justify-content: left;
@@ -180,7 +189,7 @@ textarea {
   display: block;
   font-weight: 700;
   line-height: 18px;
-  font-size: x-small;
+  font-size: small;
 }
 
 .nav .nav-column li a:hover {
@@ -188,5 +197,5 @@ textarea {
 }
 
 li.list{
-  font-size: x-small;
+  font-size: small;
 }
