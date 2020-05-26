@@ -8,7 +8,7 @@ Different calls are used depending on the cluster needed.
 ### Using standard machines
 gcloud dataproc clusters create features1 \
   --image-version 1.4.22-debian9 \
-  --initialization-actions gs://goog-dataproc-initialization-actions-us-east1/python/pip-install.sh \
+  --initialization-actions gs://topic-sentiment-1/pip-install.sh \
   --metadata 'PIP_PACKAGES=spark-nlp==2.4.1 contractions'
 
 ### alternate for bert approach  
@@ -19,6 +19,14 @@ gcloud dataproc clusters create features1 \
   --worker-machine-type n1-highmem-4 \
   --initialization-actions gs://goog-dataproc-initialization-actions-us-east1/python/pip-install.sh \
   --metadata 'PIP_PACKAGES=tensorflow==2.0.0 pyarrow==0.15.1 sentencepiece==0.1.85 gcsfs nltk tensorflow-hub tables bert-for-tf2 absl-py google-cloud-storage'  
+
+### testing alternate for bert approach  
+gcloud dataproc clusters create features1 \
+  --image-version 1.4.22-debian9 \
+  --num-workers 2 \
+  --initialization-actions gs://goog-dataproc-initialization-actions-us-east1/python/pip-install.sh \
+  --metadata 'PIP_PACKAGES=tensorflow==2.0.0 pyarrow==0.15.1 sentencepiece==0.1.85 gcsfs nltk tensorflow-hub tables bert-for-tf2 absl-py google-cloud-storage'  
+
 
 ### Setup allowing Jupyter usage
 gcloud beta dataproc clusters create classic1 \

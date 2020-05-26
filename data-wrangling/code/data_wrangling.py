@@ -1,16 +1,16 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, input_file_name, udf, expr, date_format, rank
+from pyspark.sql.functions import col, expr, date_format, rank
 from pyspark.sql.window import Window
 
 spark = (SparkSession.builder
-        .config("spark.debug.maxToStringFields", 100)
-        .getOrCreate()
+         .config("spark.debug.maxToStringFields", 100)
+         .getOrCreate()
          )
 
-RAW_DATA_INPUT = '"gs://topic-sentiment-1/raw_data_test/sample3.json"'
-#WRANGLED_DATA_OUTPUT =
+RAW_DATA = 'gs://topic-sentiment-1/test_raw_data/sample3.json'
+WRANGLED_DATA = 'gs://topic-sentiment-1/test_wrangled_data/'
 
-raw_df = spark.read.json(RAW_DATA_INPUT)
+raw_df = spark.read.json(RAW_DATA)
 
 # delete columns we don't need
 columns_to_drop = ['filename', 'image_url', 'localpath', 'title_page', 'title_rss']
@@ -60,6 +60,13 @@ clean_df = clean_df.select('*', rank().over(window).alias('rank')).filter(col('r
 subtotal = clean_df.count()
 lower_threshold = 0.005 * subtotal
 
-total_by_publication = clean_df.group_by('source_domain').count()
+total_by_publication = clean_df.groupby('source_domain').count()
 total_by_publication = total_by_publication.where(f'count > {lower_threshold}')
+
+vals = total_by_publication.select('source_domain').collect()
+keep_publications = [f"{val.source_domain}" for val in vals]
+
+clean_df = clean_df.where(col('source_domain').isin(keep_publications))
+
+clean_df.write.parquet(WRANGLED_DATA, mode="overwrite")
 
