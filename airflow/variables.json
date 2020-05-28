@@ -1,0 +1,10 @@
+{
+  "SPARK_CLUSTER": "features1",
+  "MASTER_MACHINE_TYPE": "n1-standard-1",
+  "NUMBER_OF_WORKERS": "2",
+  "PROJECT": "topic-sentiment-269614",
+  "REGION": "us-east1",
+  "WORKER_MACHINE_TYPE": "n1-standard-1",
+  "ZONE": "us-east1-c",
+  "MODEL_INSTANCE": "model1"
+}

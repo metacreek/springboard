@@ -82,7 +82,14 @@ gcloud compute instances create model1 \
         --maintenance-policy=TERMINATE \
         --accelerator="type=nvidia-tesla-t4,count=1" \
         --machine-type=n1-standard-8 \
-        --metadata="install-nvidia-driver=True"  
+        --metadata="install-nvidia-driver=True" 
+        
+gcloud compute instances create model1 \
+        --zone=us-east1-c \
+        --image-family=tf-latest-cu92 \
+        --image-project=deeplearning-platform-release 
+ 
+         
 
 gcloud compute --project=topic-sentiment-269614 instances get-serial-port-output model1 --zone=us-east1-c
 

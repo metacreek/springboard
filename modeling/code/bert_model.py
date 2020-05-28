@@ -21,18 +21,23 @@ tfrecords_filename = 'tokens.tfrecord'
 
 
 
-# data_array = []
-# for i in range(0,1):
-#     df = get_hdf_from_file(f'tokenized_{i}.h5', 'clean_data')
-#     df['ids'] = df['ids'].map(lambda x: np.asarray(x, dtype=np.int32))
-#     df['masks'] = df['masks'].map(lambda x: np.asarray(x, dtype=np.int32))
-#     df['segments'] = df['segments'].map(lambda x: np.asarray(x, dtype=np.int32))
-#     data_array.append(df)
-#
-# all_data_pdf = pd.concat([data_array[i] for i in range(0, 1)])
+data_array = []
+for i in range(0,1):
+    df = get_hdf_from_file(f'tokenized_{i}.h5', 'clean_data')
+    df['ids'] = df['ids'].map(lambda x: np.asarray(x, dtype=np.int32))
+    df['masks'] = df['masks'].map(lambda x: np.asarray(x, dtype=np.int32))
+    df['segments'] = df['segments'].map(lambda x: np.asarray(x, dtype=np.int32))
+    data_array.append(df)
 
-inputs = [all_data_pdf['ids'].to_list(), all_data_pdf['masks'].to_list(),
-          all_data_pdf['segments'].to_list()]
+all_data_pdf = pd.concat([data_array[i] for i in range(0, 1)])
+
+del data_array
+
+# inputs = [all_data_pdf['ids'].to_list(), all_data_pdf['masks'].to_list(),
+#           all_data_pdf['segments'].to_list()]
+
+counts = all_data_pdf.groupby('source_index').source_domain.count().reset_index()
+print(counts)
 
 NUM_CLASSES = len(domain_lookup)
 print("Number of classes: ", NUM_CLASSES)
@@ -40,8 +45,14 @@ print("Number of classes: ", NUM_CLASSES)
 all_source_index = all_data_pdf['source_index']
 all_y_array = to_categorical(all_source_index)
 
-X_train, X_test,  y_train, y_test, index_train, index_test = train_test_split(inputs, all_y_array,  all_source_index,
+X_train, X_test,  y_train, y_test, index_train, index_test = train_test_split(all_data_pdf, all_y_array,  all_source_index,
       test_size=0.2, shuffle=True, stratify=all_source_index)
+
+ids = X_train['ids'].values
+masks = X_train['masks'].values
+segments = X_train['segments'].values
+
+inputs = [np.vstack(ids), np.vstack(masks), np.vstack(segments)]
 
 bert_layer=hub.KerasLayer("https://tfhub.dev/tensorflow/bert_en_uncased_L-12_H-768_A-12/1",trainable=False)
 
@@ -64,14 +75,30 @@ out = tf.keras.layers.Dense(NUM_CLASSES, activation="softmax", name="dense_outpu
 model = tf.keras.models.Model(
       inputs=[input_word_ids, input_mask, segment_ids], outputs=out)
 
+checkpoint_filepath = 'gs://topic-sentiment-1/checkpoints'
+model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+    filepath=checkpoint_filepath,
+    monitor='val_acc',
+    mode='max')
+
+early_stopping = tf.keras.callbacks.EarlyStopping(
+    monitor='val_loss', min_delta=0, patience=1, verbose=1, mode='auto',
+    baseline=None, restore_best_weights=True
+)
 
 model.compile(loss='categorical_crossentropy',
-                  optimizer='adam',
-                  metrics=['accuracy'])
+              optimizer='adam',
+              metrics=['accuracy']
+              )
 
 model.summary()
 
-history = model.fit(inputs, y_train, epochs=1, batch_size=1000, shuffle=True)
+history = model.fit(inputs,
+                    y_train,
+                    epochs=1,
+                    batch_size=1000,
+                    shuffle=True,
+                    callbacks=[model_checkpoint_callback, early_stopping])
 
 y_preds = model.predict(X_test)
 y_top_preds = np.argmax(y_preds, axis=1)

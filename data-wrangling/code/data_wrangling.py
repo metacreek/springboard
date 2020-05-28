@@ -13,12 +13,16 @@ import pandas as pd
 from google.cloud import storage
 
 
+
 spark = (SparkSession.builder
          .config("spark.debug.maxToStringFields", 100)
          .getOrCreate()
          )
 
 sc = spark.sparkContext
+
+print("@@@@ Variables:")
+print(dir())
 
 
 def log_time(msg):
@@ -30,6 +34,8 @@ def log_time(msg):
 
 RAW_DATA = 'gs://topic-sentiment-1/test_raw_data/sample3.json'
 TOKENIZED_DATA = 'test_tokenized'
+
+log_time("Begin processing")
 
 raw_df = spark.read.json(RAW_DATA)
 
@@ -52,6 +58,7 @@ def add_published(clean_df):
     clean_df = clean_df.withColumn("month", (date_format(col("published"), 'M').cast("int")))
     return clean_df
 
+
 clean_df = add_published(clean_df)
 
 
@@ -70,6 +77,7 @@ def handle_language(clean_df):
     clean_df = clean_df.where("language_guess = 'en'")
     return clean_df
 
+
 clean_df = handle_language(clean_df)
 
 
@@ -77,6 +85,7 @@ def drop_empty(clean_df):
     # get rid of any rows where the date of publish, the title or the text/description is empty.
     clean_df = clean_df.na.drop(subset=['date_publish', 'published', 'text_or_desc', 'title'])
     return clean_df
+
 
 clean_df = drop_empty(clean_df)
 
@@ -97,9 +106,10 @@ def year_filter(clean_df):
     clean_df = clean_df.where('year >= 2010')
     return clean_df
 
+
 clean_df = year_filter(clean_df)
 
-
+log_time("Begin leveling data")
 def level_data(clean_df):
     # Make no publication have more than 3.5 percent of the data
     subtotal = clean_df.count()
@@ -117,13 +127,11 @@ def level_data(clean_df):
     clean_df = clean_df.where(col('source_domain').isin(keep_publications))
     return clean_df
 
-clean_df= level_data(clean_df)
 
-log_time("Begin processing")
-
+clean_df = level_data(clean_df)
+log_time("Begin tokenizing")
 MAX_SEQ_LEN = 256
 MAX_SEQ_LEN_BC = sc.broadcast(MAX_SEQ_LEN)
-
 
 # This project seeks to classify the origin of news stories.  Some publishers
 # include the name of the publication in the crawled stories.  I felt this was a
@@ -189,6 +197,7 @@ for key in SUBSTITUTION:
 
 # broadcast data to workers
 SUBSTITUTION_BC = sc.broadcast(SUBSTITUTION)
+
 
 def add_regex(source):
     """
@@ -335,7 +344,7 @@ def process_data(raw_data_sdf, bert_layer):
     clean_data_sdf = clean_data_sdf.withColumn('clean_text', udf_clean_text(F.array('text_or_desc', 'regex')))
 
     log_time("Begin tokenizer")
-    #load the tokenizer for the BERT model used
+    # load the tokenizer for the BERT model used
     FullTokenizer = bert.bert_tokenization.FullTokenizer
     vocab_file = bert_layer.resolved_object.vocab_file.asset_path.numpy()
     do_lower_case = bert_layer.resolved_object.do_lower_case.numpy()
@@ -355,6 +364,7 @@ def process_data(raw_data_sdf, bert_layer):
 
     log_time("Convert to pandas")
     return clean_data_sdf
+
 
 log_time('Begin stopwords')
 # loads the nltk english stopwords that should be excluded
@@ -378,7 +388,6 @@ raw_data_sdf = clean_df
 raw_data_sdf.printSchema()
 raw_data_split_sdf = raw_data_sdf.randomSplit([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
 
-
 gcs = storage.Client()
 iteration = 0
 for df in raw_data_split_sdf:
@@ -394,7 +403,8 @@ for df in raw_data_split_sdf:
         store.info()
         store.close()
         # see https://stackoverflow.com/a/56787083
-        gcs.bucket('topic-sentiment-1').blob(f'{TOKENIZED_DATA}/domain_lookup.h5').upload_from_filename('domain_lookup.h5')
+        gcs.bucket('topic-sentiment-1').blob(f'{TOKENIZED_DATA}/domain_lookup.h5').upload_from_filename(
+            'domain_lookup.h5')
 
     clean_sdf = process_data(df, bert_layer)
     clean_data_pdf = clean_sdf.toPandas()
@@ -409,4 +419,3 @@ for df in raw_data_split_sdf:
     iteration = iteration + 1
 
 log_time("Finished")
-
