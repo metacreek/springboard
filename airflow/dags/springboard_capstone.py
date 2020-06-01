@@ -19,9 +19,9 @@ NUMBER_OF_WORKERS = Variable.get('NUMBER_OF_WORKERS')
 PROJECT = Variable.get('PROJECT')
 ZONE = Variable.get('ZONE')
 REGION = Variable.get('REGION')
-# MODEL_INSTANCE = Variable.get('MODEL_INSTANCE')
 START_DATE = datetime.datetime(2020, 1, 1)
-
+RAW_DATA = Variable.get("RAW_DATA")
+TOKENIZED_DATA_DIR = Variable.get("TOKENIZED_DATA_DIR")
 
 INTERVAL = '@once'
 
@@ -45,7 +45,7 @@ dag1 = DAG('capstone_workflow',
 
 
 
-## Dummy tasks
+# Dummy tasks
 begin = DummyOperator(task_id='begin', retries=1, dag=dag1)
 end = DummyOperator(task_id='end', retries=1)
 
@@ -55,10 +55,11 @@ create_spark = DataprocClusterCreateOperator(
     num_workers=NUMBER_OF_WORKERS,
     zone=ZONE,
     init_actions_uris=['gs://goog-dataproc-initialization-actions-us-east1/python/pip-install.sh'],
-    metadata={'PIP_PACKAGES': 'tensorflow==2.0.0 pyarrow==0.15.1 sentencepiece==0.1.85 gcsfs nltk tensorflow-hub tables bert-for-tf2 absl-py google-cloud-storage '},
+    metadata={'PIP_PACKAGES': 'tensorflow==2.0.0 pyarrow==0.15.1 sentencepiece==0.1.85 gcsfs nltk tensorflow-hub tables bert-for-tf2 absl-py google-cloud-storage google-cloud-logging '},
     image_version='1.4.22-debian9',
     master_machine_type=MASTER_MACHINE_TYPE,
     worker_machine_type=WORKER_MACHINE_TYPE,
+    properties={"dataproc:dataproc.logging.stackdriver.job.driver.enable": "true"},
     region=REGION,
     task_id='create_spark',
     dag=dag1
@@ -66,10 +67,9 @@ create_spark = DataprocClusterCreateOperator(
 
 run_spark = DataProcPySparkOperator(
     main='gs://topic-sentiment-1/code/data_wrangling.py',
-    arguments=['a', 'b'],
+    arguments=[RAW_DATA, TOKENIZED_DATA_DIR],
     task_id='run_spark',
     cluster_name=SPARK_CLUSTER,
-    dataproc_pyspark_properties={"c": "1", "d": "2"},
     region=REGION,
     dag=dag1
 )

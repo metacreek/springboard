@@ -11,8 +11,12 @@ import tensorflow_hub as hub
 import bert
 import pandas as pd
 from google.cloud import storage
+from google.cloud import logging
+import sys
 
-
+logging_client = logging.Client()
+log_name = 'wrangling'
+logger = logging_client.logger(log_name)
 
 spark = (SparkSession.builder
          .config("spark.debug.maxToStringFields", 100)
@@ -21,111 +25,115 @@ spark = (SparkSession.builder
 
 sc = spark.sparkContext
 
-print("@@@@ Variables:")
-print(dir())
+logger.log_text(f"@@@@ Variables: {dir()}")
+logger.log_text(f"@@@@ argv: {sys.argv}")
 
 
 def log_time(msg):
     """
     A short function to measure execution time of various steps
     """
-    print(f"@@@@ {msg} {datetime.now()}")
+    logger.log_text(f"@@@@ {msg} {datetime.now()}")
 
 
-RAW_DATA = 'gs://topic-sentiment-1/test_raw_data/sample3.json'
-TOKENIZED_DATA = 'test_tokenized'
+RAW_DATA = sys.argv[1]
+TOKENIZED_DATA_DIR = sys.argv[2]
 
 log_time("Begin processing")
 
 raw_df = spark.read.json(RAW_DATA)
 
 
-def drop_columns(clean_df):
+def drop_columns(sdf):
     # delete columns we don't need
     columns_to_drop = ['filename', 'image_url', 'localpath', 'title_page', 'title_rss']
-    clean_df = clean_df.drop(*columns_to_drop)
-    return clean_df
+    sdf = sdf.drop(*columns_to_drop)
+    return sdf
 
 
 clean_df = drop_columns(raw_df)
 
 
-def add_published(clean_df):
+def add_published(sdf):
     # create timestamp version of string date_publish
-    clean_df = clean_df.withColumn("published", (col("date_publish").cast("timestamp")))
+    sdf = sdf.withColumn("published", (col("date_publish").cast("timestamp")))
     # Useful in cleaning and analysis
-    clean_df = clean_df.withColumn("year", (date_format(col("published"), 'yyyy').cast("int")))
-    clean_df = clean_df.withColumn("month", (date_format(col("published"), 'M').cast("int")))
-    return clean_df
+    sdf = sdf.withColumn("year", (date_format(col("published"), 'yyyy').cast("int")))
+    sdf = sdf.withColumn("month", (date_format(col("published"), 'M').cast("int")))
+    return sdf
 
 
 clean_df = add_published(clean_df)
 
 
-def handle_language(clean_df):
+def handle_language(sdf):
     # We create a new column text_or_desc that will be used in analysis.
     # This uses the text column data, if present, and falls back to description if the text column was empty.
-    clean_df = clean_df.withColumn("text_or_desc",
-                                   expr("case when text IS NULL THEN description ELSE text END"))
+    sdf = sdf.withColumn("text_or_desc",
+                         expr("case when text IS NULL THEN description ELSE text END"))
     # we assume that the language is English (en) if the language was not specified.
     # We are excluding bbc.com where this was not a good assumption.
     # See EDA-inital notebook for more info.
-    clean_df = clean_df.withColumn("language_guess",
-                                   expr(
-                                       "case when (language IS NULL AND source_domain NOT IN ('bbc.com')) THEN 'en' ELSE language END"))
+    sdf = sdf.withColumn("language_guess",
+                         expr(
+                             "case when (language IS NULL AND source_domain NOT IN ('bbc.com')) THEN 'en' ELSE language END"))
     # We are only doing english
-    clean_df = clean_df.where("language_guess = 'en'")
-    return clean_df
+    sdf = sdf.where("language_guess = 'en'")
+    return sdf
 
 
 clean_df = handle_language(clean_df)
 
 
-def drop_empty(clean_df):
+def drop_empty(sdf):
     # get rid of any rows where the date of publish, the title or the text/description is empty.
-    clean_df = clean_df.na.drop(subset=['date_publish', 'published', 'text_or_desc', 'title'])
-    return clean_df
+    sdf = sdf.na.drop(subset=['date_publish', 'published', 'text_or_desc', 'title'])
+    return sdf
 
 
 clean_df = drop_empty(clean_df)
 
 
-def remove_duplicates(clean_df):
+def remove_duplicates(sdf):
     # drop duplicates
-    clean_df = clean_df.dropDuplicates(['url', 'date_publish'])
+    sdf = sdf.dropDuplicates(['url', 'date_publish'])
     # additional duplicate removal
-    clean_df = clean_df.dropDuplicates(['text_or_desc'])
-    return clean_df
+    sdf = sdf.dropDuplicates(['text_or_desc'])
+    return sdf
 
 
 clean_df = remove_duplicates(clean_df)
 
 
-def year_filter(clean_df):
+def year_filter(sdf):
     # Use only data since 2010
-    clean_df = clean_df.where('year >= 2010')
-    return clean_df
+    sdf = sdf.where('year >= 2010')
+    return sdf
 
 
 clean_df = year_filter(clean_df)
 
 log_time("Begin leveling data")
-def level_data(clean_df):
+
+
+def level_data(sdf):
     # Make no publication have more than 3.5 percent of the data
-    subtotal = clean_df.count()
-    upper_threshold = 0.035 * subtotal
+    subtotal = sdf.count()
+    upper_threshold = 0.03 * subtotal
+    logger.log_text(f"Upper threshold is {upper_threshold}")
     # see https://stackoverflow.com/a/38398563/914544
-    window = Window.partitionBy(clean_df['source_domain']).orderBy(clean_df['published'].desc())
-    clean_df = clean_df.select('*', rank().over(window).alias('rank')).filter(col('rank') <= upper_threshold)
+    window = Window.partitionBy(sdf['source_domain']).orderBy(sdf['published'].desc())
+    sdf = sdf.select('*', rank().over(window).alias('rank')).filter(col('rank') <= upper_threshold)
     # Get rid of publications with small data
-    subtotal = clean_df.count()
+    subtotal = sdf.count()
     lower_threshold = 0.005 * subtotal
-    total_by_publication = clean_df.groupby('source_domain').count()
+    logger.log_text(f"Lower threshold is {lower_threshold}")
+    total_by_publication = sdf.groupby('source_domain').count()
     total_by_publication = total_by_publication.where(f'count > {lower_threshold}')
     vals = total_by_publication.select('source_domain').collect()
     keep_publications = [f"{val.source_domain}" for val in vals]
-    clean_df = clean_df.where(col('source_domain').isin(keep_publications))
-    return clean_df
+    sdf = sdf.where(col('source_domain').isin(keep_publications))
+    return sdf
 
 
 clean_df = level_data(clean_df)
@@ -403,7 +411,7 @@ for df in raw_data_split_sdf:
         store.info()
         store.close()
         # see https://stackoverflow.com/a/56787083
-        gcs.bucket('topic-sentiment-1').blob(f'{TOKENIZED_DATA}/domain_lookup.h5').upload_from_filename(
+        gcs.bucket('topic-sentiment-1').blob(f'{TOKENIZED_DATA_DIR}/domain_lookup.h5').upload_from_filename(
             'domain_lookup.h5')
 
     clean_sdf = process_data(df, bert_layer)
@@ -415,7 +423,7 @@ for df in raw_data_split_sdf:
     store.info()
     store.close()
     log_time("Begin move to bucket")
-    gcs.bucket('topic-sentiment-1').blob(f"{TOKENIZED_DATA}/{filename}").upload_from_filename(filename)
+    gcs.bucket('topic-sentiment-1').blob(f"{TOKENIZED_DATA_DIR}/{filename}").upload_from_filename(filename)
     iteration = iteration + 1
 
 log_time("Finished")
