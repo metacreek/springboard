@@ -14,15 +14,17 @@ from google.cloud import storage
 from google.cloud import logging
 import sys
 
-logging_client = logging.Client()
-log_name = 'wrangling'
-logger = logging_client.logger(log_name)
+def setup_logging():
+    logging_client = logging.Client()
+    log_name = 'wrangling'
+    return logging_client.logger(log_name)
 
 spark = (SparkSession.builder
          .config("spark.debug.maxToStringFields", 100)
          .getOrCreate()
          )
 
+logger = setup_logging()
 sc = spark.sparkContext
 
 logger.log_text(f"@@@@ Variables: {dir()}")
@@ -84,6 +86,11 @@ def handle_language(sdf):
 
 clean_df = handle_language(clean_df)
 
+# remove articles with a particular repeated statement.  One site (thenation.com) had a particlar habit
+# of including long sales blurbs in the story text.  Because there were multiple versions of this, I decided
+# to not use any such news story, because it would give the classifier an unfair signal of the source domain.
+clean_data_sdf = clean_df.filter(~clean_df.text_or_desc.contains("Sign up for Take Action"))
+
 
 def drop_empty(sdf):
     # get rid of any rows where the date of publish, the title or the text/description is empty.
@@ -117,21 +124,24 @@ log_time("Begin leveling data")
 
 
 def level_data(sdf):
-    # Make no publication have more than 3.5 percent of the data
+
+
     subtotal = sdf.count()
-    upper_threshold = 0.03 * subtotal
+    # threshold is based on previous analysis of data
+    upper_threshold = 20000
     logger.log_text(f"Upper threshold is {upper_threshold}")
     # see https://stackoverflow.com/a/38398563/914544
     window = Window.partitionBy(sdf['source_domain']).orderBy(sdf['published'].desc())
     sdf = sdf.select('*', rank().over(window).alias('rank')).filter(col('rank') <= upper_threshold)
     # Get rid of publications with small data
-    subtotal = sdf.count()
-    lower_threshold = 0.005 * subtotal
-    logger.log_text(f"Lower threshold is {lower_threshold}")
     total_by_publication = sdf.groupby('source_domain').count()
-    total_by_publication = total_by_publication.where(f'count > {lower_threshold}')
     vals = total_by_publication.select('source_domain').collect()
-    keep_publications = [f"{val.source_domain}" for val in vals]
+    all_publications = [val.source_domain for val in vals]
+    logger.log_text(f"all publications {all_publications}")
+    total_by_publication = total_by_publication.where(f'count == {upper_threshold}')
+    vals = total_by_publication.select('source_domain').collect()
+    keep_publications = [val.source_domain for val in vals]
+    logger.log_text(f"keep publications {keep_publications}")
     sdf = sdf.where(col('source_domain').isin(keep_publications))
     return sdf
 
@@ -337,13 +347,8 @@ def process_data(raw_data_sdf, bert_layer):
     :param bert_layer: tensorflow Keras layer for the BERT model being used.
     """
     global stop_words_bc, tokenizer, domains_bc
-    # remove articles with a particular repeated statement.  One site (thenation.com) had a particlar habit
-    # of including long sales blurbs in the story text.  Because there were multiple versions of this, I decided
-    # to not use any such news story, because it would give the classifier an unfair signal of the source domain.
-    clean_data_sdf = raw_data_sdf.filter(~raw_data_sdf.text_or_desc.contains("Sign up for Take Action"))
     # add weeks column
-    clean_data_sdf = clean_data_sdf.withColumn('published_date', F.to_date(F.col('published')))
-    clean_data_sdf = clean_data_sdf.withColumn('weeks',
+    clean_data_sdf = raw_data_sdf.withColumn('weeks',
                                                F.floor(F.datediff(F.col('published'), F.lit('2010-01-01')) / 7))
     log_time("Begin regex")
 

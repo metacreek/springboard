@@ -130,8 +130,8 @@ model.summary()
 log_time("begin fit")
 history = model.fit(inputs,
                     y_train,
-                    epochs=5,
-                    batch_size=128,
+                    epochs=7,
+                    batch_size=256,
                     shuffle=True,
                     validation_split=0.1,
                     callbacks=[model_checkpoint_callback, early_stopping])
