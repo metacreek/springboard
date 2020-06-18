@@ -9,6 +9,7 @@ from datetime import datetime
 spark_context = SparkContext()
 sql_context = SQLContext(spark_context)
 
+SUBSTITUTION_BC = ''
 
 def get_value(sdf, colname):
     return sdf.select(colname).collect()[0][0]
@@ -168,4 +169,10 @@ def test_clean_text():
     reg = "long"
     arr = [text, reg]
     result = data_wrangling.clean_text(arr)
-    
+
+def test_add_regex():
+    substitution = data_wrangling.setup_regex_cleanup()
+    global SUBSTITUTION_BC
+    SUBSTITUTION_BC = spark_context.broadcast(substitution)
+    regex = data_wrangling.add_regex('msnbc.com')
+    assert regex == 'MSNBC'
