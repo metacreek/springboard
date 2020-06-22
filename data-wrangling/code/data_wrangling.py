@@ -283,6 +283,8 @@ def process_data(raw_data_sdf, bert_layer):
     # remove all the identifying text from stories
     clean_data_sdf = clean_data_sdf.withColumn('clean_text', udf_clean_text(F.array('text_or_desc', 'regex')))
 
+    clean_data_sdf.take(100)
+
     log_time("Begin tokenizer")
     # load the tokenizer for the BERT model used
     FullTokenizer = bert.bert_tokenization.FullTokenizer
@@ -299,7 +301,7 @@ def process_data(raw_data_sdf, bert_layer):
     clean_data_sdf = clean_data_sdf.withColumn('ids', udf_get_ids('tokens'))
     clean_data_sdf = clean_data_sdf.withColumn('source_index', udf_source_index('source_domain').cast('int'))
     # let's slim down the dataframe before we save it to disk.
-    clean_data_sdf = clean_data_sdf[['source_domain', 'text_or_desc', 'clean_text', 'published_date', 'year',
+    clean_data_sdf = clean_data_sdf[['source_domain', 'text_or_desc', 'clean_text', 'published', 'year',
                                      'title', 'url', 'weeks', 'tokens', 'masks', 'segments', 'ids', 'source_index']]
 
     return clean_data_sdf
