@@ -8,9 +8,11 @@ The details of the analysis can be found [here](https://github.com/metacreek/spr
 
 Analysis shows that the most important factor in predicting adoption is the account creation time. We must view this with
 some skepticism as older accounts will have the most opportunity to have become adopted at some point over their life; 
-similarly, it is possible that newer accounts will eventually become adopted but have not yet had enough time to do so.
-See the   
+similarly, it is possible that newer accounts will eventually become adopted but have not yet had enough time to do so. 
 For this reason, I removed this feature and repeated the analysis to determine the next most important factor.
+
+You can see the effect of account creation on adoption rate in the following diagram:
+![adoption rate as a function of account age](./creation_adoption.png)
 
 ### Second most important factor: organization
 
