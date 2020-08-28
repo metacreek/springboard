@@ -12,6 +12,7 @@ similarly, it is possible that newer accounts will eventually become adopted but
 For this reason, I removed this feature and repeated the analysis to determine the next most important factor.
 
 You can see the effect of account creation on adoption rate in the following diagram:
+
 ![adoption rate as a function of account age](./creation_adoption.png)
 
 ### Second most important factor: organization
