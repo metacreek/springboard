@@ -171,8 +171,5 @@ def test_clean_text():
     result = data_wrangling.clean_text(arr)
 
 def test_add_regex():
-    substitution = data_wrangling.setup_regex_cleanup()
-    global SUBSTITUTION_BC
-    SUBSTITUTION_BC = spark_context.broadcast(substitution)
     regex = data_wrangling.add_regex('msnbc.com')
-    assert regex == 'MSNBC'
+    assert regex == '(MSNBC|msnbc.com|\n)'

@@ -1,7 +1,7 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, expr, date_format, rank
-import pyspark.sql.functions as F
-import pyspark.sql.types as T
+import pyspark.sql.functions as f
+import pyspark.sql.types as t
 from pyspark.sql.window import Window
 from datetime import datetime
 import re
@@ -25,7 +25,9 @@ def log_time(msg):
     """
     A short function to measure execution time of various steps
     """
-    logger.log_text(f"@@@@ {msg} {datetime.now()}")
+    msg = f"@@@@ {msg} {datetime.now()}"
+    print(msg)
+    logger.log_text(msg)
 
 
 def drop_columns(sdf):
@@ -105,7 +107,8 @@ def add_regex(source):
 
     :param source: string, canonical website domain name
     """
-    return SUBSTITUTION_BC.value[source]
+    substitution = setup_regex_cleanup()
+    return substitution[source]
 
 
 def clean_text(arr):
@@ -240,12 +243,11 @@ def setup_regex_cleanup():
 
 def get_source_domains(sdf):
     """
-    Returns a dict with canonical domain names as keys and unique integer identifiers for the sorted domain namess
+    Returns a dict with canonical domain names as keys and unique integer identifiers for the sorted domain names
 
     :param sdf: spark dataframe that contains at least one instance of all domain names
     """
-    log_time("Begin source domains")
-    source_domains = sdf.select(F.collect_list('source_domain')).first()[0]
+    source_domains = sdf.select(f.collect_list('source_domain')).first()[0]
     source_domains = set(source_domains)
     i = 0
     domains = {}
@@ -276,12 +278,12 @@ def process_data(raw_data_sdf, bert_layer):
     global stop_words_bc, tokenizer, domains_bc
     # add weeks column
     clean_data_sdf = raw_data_sdf.withColumn('weeks',
-                                             F.floor(F.datediff(F.col('published'), F.lit('2010-01-01')) / 7))
+                                             f.floor(f.datediff(f.col('published'), f.lit('2010-01-01')) / 7))
     log_time("Begin regex")
 
     clean_data_sdf = clean_data_sdf.withColumn('regex', udf_add_regex('source_domain'))
     # remove all the identifying text from stories
-    clean_data_sdf = clean_data_sdf.withColumn('clean_text', udf_clean_text(F.array('text_or_desc', 'regex')))
+    clean_data_sdf = clean_data_sdf.withColumn('clean_text', udf_clean_text(f.array('text_or_desc', 'regex')))
 
     clean_data_sdf.take(100)
 
@@ -323,6 +325,7 @@ if __name__ == "__main__":
 
     RAW_DATA = sys.argv[1]
     TOKENIZED_DATA_DIR = sys.argv[2]
+    THRESHOLD = sys.argv[3]
 
     log_time("Begin processing")
 
@@ -346,7 +349,6 @@ if __name__ == "__main__":
     clean_df = year_filter(clean_df)
 
     log_time("Begin leveling data")
-    THRESHOLD = 20000
     clean_df = level_data(clean_df, THRESHOLD)
     log_time("Begin tokenizing")
     MAX_SEQ_LEN = 256
@@ -354,20 +356,17 @@ if __name__ == "__main__":
 
     substitution = setup_regex_cleanup()
 
-    # broadcast data to workers
-    SUBSTITUTION_BC = sc.broadcast(substitution)
+    udf_add_regex = f.udf(add_regex)
 
-    udf_add_regex = F.udf(add_regex)
+    udf_clean_text = f.udf(clean_text)
 
-    udf_clean_text = F.udf(clean_text)
+    udf_get_tokens = f.udf(get_tokens)
 
-    udf_get_tokens = F.udf(get_tokens)
+    udf_get_masks = f.udf(get_masks, t.ArrayType(t.IntegerType()))
+    udf_get_segments = f.udf(get_segments, t.ArrayType(t.IntegerType()))
+    udf_get_ids = f.udf(get_ids, t.ArrayType(t.IntegerType()))
 
-    udf_get_masks = F.udf(get_masks, T.ArrayType(T.IntegerType()))
-    udf_get_segments = F.udf(get_segments, T.ArrayType(T.IntegerType()))
-    udf_get_ids = F.udf(get_ids, T.ArrayType(T.IntegerType()))
-
-    udf_source_index = F.udf(source_index)
+    udf_source_index = f.udf(source_index)
 
     log_time('Begin stopwords')
     # loads the nltk english stopwords that should be excluded
@@ -389,26 +388,26 @@ if __name__ == "__main__":
     # it also saved on memory required for processing.
     raw_data_sdf = clean_df
     raw_data_sdf.printSchema()
-    raw_data_split_sdf = raw_data_sdf.randomSplit([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
 
     gcs = storage.Client()
+
+    # save the domains with their canonical ids.
+    domains = get_source_domains(raw_data_sdf)
+    domains_bc = sc.broadcast(domains)
+    domain_lookup = pd.Series(domains)
+    store = pd.HDFStore('domain_lookup.h5')
+    store['domain_lookup'] = domain_lookup
+    store.info()
+    store.close()
+    # see https://stackoverflow.com/a/56787083
+    gcs.bucket('topic-sentiment-1').blob(f'{TOKENIZED_DATA_DIR}/domain_lookup.h5').upload_from_filename(
+        'domain_lookup.h5')
+
+    raw_data_split_sdf = raw_data_sdf.randomSplit([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+
     iteration = 0
     for df in raw_data_split_sdf:
         log_time(f"Begin iteration {iteration}")
-        if iteration == 0:
-            # save the domains with their canonical ids.  This only works with large enough data sets
-            # such that it has all domains that will be used.  We only do this the first time through.
-            domains = get_source_domains(df)
-            domains_bc = sc.broadcast(domains)
-            domain_lookup = pd.Series(domains)
-            store = pd.HDFStore('domain_lookup.h5')
-            store['domain_lookup'] = domain_lookup
-            store.info()
-            store.close()
-            # see https://stackoverflow.com/a/56787083
-            gcs.bucket('topic-sentiment-1').blob(f'{TOKENIZED_DATA_DIR}/domain_lookup.h5').upload_from_filename(
-                'domain_lookup.h5')
-
         clean_sdf = process_data(df, bert_layer)
         clean_data_pdf = clean_sdf.toPandas()
         log_time("Begin store")
