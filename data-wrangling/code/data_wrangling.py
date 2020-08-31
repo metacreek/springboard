@@ -309,20 +309,8 @@ def process_data(raw_data_sdf, bert_layer):
     return clean_data_sdf
 
 
-
-
-if __name__ == "__main__":
-    spark = (SparkSession.builder
-             .config("spark.debug.maxToStringFields", 100)
-             .getOrCreate()
-             )
-
-    logger = setup_logging()
-    sc = spark.sparkContext
-
-    logger.log_text(f"@@@@ Variables: {dir()}")
-    logger.log_text(f"@@@@ argv: {sys.argv}")
-
+def main():
+    global domains_bc, stop_words_bc
     RAW_DATA = sys.argv[1]
     TOKENIZED_DATA_DIR = sys.argv[2]
     THRESHOLD = sys.argv[3]
@@ -351,22 +339,10 @@ if __name__ == "__main__":
     log_time("Begin leveling data")
     clean_df = level_data(clean_df, THRESHOLD)
     log_time("Begin tokenizing")
-    MAX_SEQ_LEN = 256
-    MAX_SEQ_LEN_BC = sc.broadcast(MAX_SEQ_LEN)
+
 
     substitution = setup_regex_cleanup()
 
-    udf_add_regex = f.udf(add_regex)
-
-    udf_clean_text = f.udf(clean_text)
-
-    udf_get_tokens = f.udf(get_tokens)
-
-    udf_get_masks = f.udf(get_masks, t.ArrayType(t.IntegerType()))
-    udf_get_segments = f.udf(get_segments, t.ArrayType(t.IntegerType()))
-    udf_get_ids = f.udf(get_ids, t.ArrayType(t.IntegerType()))
-
-    udf_source_index = f.udf(source_index)
 
     log_time('Begin stopwords')
     # loads the nltk english stopwords that should be excluded
@@ -421,3 +397,35 @@ if __name__ == "__main__":
         iteration = iteration + 1
 
     log_time("Finished")
+
+
+
+if __name__ == "__main__":
+    spark = (SparkSession.builder
+             .config("spark.debug.maxToStringFields", 100)
+             .getOrCreate()
+             )
+
+    logger = setup_logging()
+    sc = spark.sparkContext
+
+    logger.log_text(f"@@@@ Variables: {dir()}")
+    logger.log_text(f"@@@@ argv: {sys.argv}")
+
+    # setup udf functions in global space
+    udf_add_regex = f.udf(add_regex)
+
+    udf_clean_text = f.udf(clean_text)
+
+    udf_get_tokens = f.udf(get_tokens)
+
+    udf_get_masks = f.udf(get_masks, t.ArrayType(t.IntegerType()))
+    udf_get_segments = f.udf(get_segments, t.ArrayType(t.IntegerType()))
+    udf_get_ids = f.udf(get_ids, t.ArrayType(t.IntegerType()))
+
+    udf_source_index = f.udf(source_index)
+
+    MAX_SEQ_LEN = 256
+    MAX_SEQ_LEN_BC = sc.broadcast(MAX_SEQ_LEN)
+
+    main()
