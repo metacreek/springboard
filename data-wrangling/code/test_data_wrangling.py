@@ -5,11 +5,10 @@ import data_wrangling
 from pyspark import SparkContext
 from pyspark.sql import SQLContext
 from datetime import datetime
+import tensorflow_hub as hub
 
-spark_context = SparkContext()
-sql_context = SQLContext(spark_context)
-
-SUBSTITUTION_BC = ''
+sc = SparkContext()
+sql_context = SQLContext(sc)
 
 def get_value(sdf, colname):
     return sdf.select(colname).collect()[0][0]
@@ -169,7 +168,16 @@ def test_clean_text():
     reg = "long"
     arr = [text, reg]
     result = data_wrangling.clean_text(arr)
+    assert result == "the   brown horse"
 
 def test_add_regex():
     regex = data_wrangling.add_regex('msnbc.com')
     assert regex == '(MSNBC|msnbc.com|\n)'
+
+def test_get_tokens():
+    data_wrangling.setup_stopwords(sc)
+    data_wrangling.setup_max_seq_len(sc)
+    bert_layer = hub.KerasLayer("https://tfhub.dev/tensorflow/bert_en_uncased_L-12_H-768_A-12/1", trainable=False)
+    tokenizer = data_wrangling.get_tokenizer(bert_layer)
+    tokens = data_wrangling.get_tokens("the red house")
+    assert tokens == ['[CLS]', 'red', 'house', '[SEP]']

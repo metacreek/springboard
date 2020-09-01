@@ -21,6 +21,19 @@ def setup_logging():
     return logging_client.logger(log_name)
 
 
+def setup_stopwords(sc):
+    global stop_words_bc
+    # loads the nltk english stopwords that should be excluded
+    nltk.download('stopwords')
+    stop_words = set(stopwords.words('english'))
+    stop_words_bc = sc.broadcast(stop_words)
+
+
+def setup_max_seq_len(sc):
+    global MAX_SEQ_LEN_BC
+    MAX_SEQ_LEN = 256
+    MAX_SEQ_LEN_BC = sc.broadcast(MAX_SEQ_LEN)
+
 def log_time(msg):
     """
     A short function to measure execution time of various steps
@@ -131,6 +144,7 @@ def get_tokens(text):
 
     :param text: string, body of news story
     """
+    global stop_words_bc, MAX_SEQ_LEN_BC
     tokens = tokenizer.tokenize(text)
     stop_words_val = stop_words_bc.value
     tokens = [token for token in tokens if token not in stop_words_val]
@@ -288,11 +302,7 @@ def process_data(raw_data_sdf, bert_layer):
     clean_data_sdf.take(100)
 
     log_time("Begin tokenizer")
-    # load the tokenizer for the BERT model used
-    FullTokenizer = bert.bert_tokenization.FullTokenizer
-    vocab_file = bert_layer.resolved_object.vocab_file.asset_path.numpy()
-    do_lower_case = bert_layer.resolved_object.do_lower_case.numpy()
-    tokenizer = FullTokenizer(vocab_file, do_lower_case)
+    tokenizer = get_tokenizer(bert_layer)
 
     clean_data_sdf = clean_data_sdf.withColumn('tokens', udf_get_tokens('clean_text'))
 
@@ -309,7 +319,17 @@ def process_data(raw_data_sdf, bert_layer):
     return clean_data_sdf
 
 
-def main():
+def get_tokenizer(bert_layer):
+    global tokenizer
+    # load the tokenizer for the BERT model used
+    FullTokenizer = bert.bert_tokenization.FullTokenizer
+    vocab_file = bert_layer.resolved_object.vocab_file.asset_path.numpy()
+    do_lower_case = bert_layer.resolved_object.do_lower_case.numpy()
+    tokenizer = FullTokenizer(vocab_file, do_lower_case)
+    return tokenizer
+
+
+def main(sc):
     global domains_bc, stop_words_bc
     RAW_DATA = sys.argv[1]
     TOKENIZED_DATA_DIR = sys.argv[2]
@@ -341,14 +361,9 @@ def main():
     log_time("Begin tokenizing")
 
 
-    substitution = setup_regex_cleanup()
+    setup_regex_cleanup()
 
-
-    log_time('Begin stopwords')
-    # loads the nltk english stopwords that should be excluded
-    nltk.download('stopwords')
-    stop_words = set(stopwords.words('english'))
-    stop_words_bc = sc.broadcast(stop_words)
+    setup_stopwords(sc)
 
     log_time("Begin Keras layer")
     # if you wanted to use a different BERT model, here is where you would specify it.
@@ -399,7 +414,6 @@ def main():
     log_time("Finished")
 
 
-
 if __name__ == "__main__":
     spark = (SparkSession.builder
              .config("spark.debug.maxToStringFields", 100)
@@ -425,7 +439,6 @@ if __name__ == "__main__":
 
     udf_source_index = f.udf(source_index)
 
-    MAX_SEQ_LEN = 256
-    MAX_SEQ_LEN_BC = sc.broadcast(MAX_SEQ_LEN)
+    setup_max_seq_len(sc)
 
-    main()
+    main(sc)
