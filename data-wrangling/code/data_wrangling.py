@@ -328,6 +328,15 @@ def get_tokenizer(bert_layer):
     tokenizer = FullTokenizer(vocab_file, do_lower_case)
     return tokenizer
 
+def store_data_file(filename, directory, dataname, data):
+    store = pd.HDFStore(filename)
+    store[dataname] = data
+    store.info()
+    store.close()
+    # see https://stackoverflow.com/a/56787083
+    gcs = storage.Client()
+    gcs.bucket('topic-sentiment-1').blob(f'{directory}/{filename}').upload_from_filename(
+        filename)
 
 def main(sc):
     global domains_bc, stop_words_bc
@@ -380,19 +389,11 @@ def main(sc):
     raw_data_sdf = clean_df
     raw_data_sdf.printSchema()
 
-    gcs = storage.Client()
-
     # save the domains with their canonical ids.
     domains = get_source_domains(raw_data_sdf)
     domains_bc = sc.broadcast(domains)
     domain_lookup = pd.Series(domains)
-    store = pd.HDFStore('domain_lookup.h5')
-    store['domain_lookup'] = domain_lookup
-    store.info()
-    store.close()
-    # see https://stackoverflow.com/a/56787083
-    gcs.bucket('topic-sentiment-1').blob(f'{TOKENIZED_DATA_DIR}/domain_lookup.h5').upload_from_filename(
-        'domain_lookup.h5')
+    store_data_file("domain_lookup.h5", TOKENIZED_DATA_DIR, 'domain_lookup', domain_lookup)
 
     raw_data_split_sdf = raw_data_sdf.randomSplit([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
 
@@ -403,12 +404,7 @@ def main(sc):
         clean_data_pdf = clean_sdf.toPandas()
         log_time("Begin store")
         filename = f"tokens_{iteration}.h5"
-        store = pd.HDFStore(filename)
-        store['clean_data'] = clean_data_pdf
-        store.info()
-        store.close()
-        log_time("Begin move to bucket")
-        gcs.bucket('topic-sentiment-1').blob(f"{TOKENIZED_DATA_DIR}/{filename}").upload_from_filename(filename)
+        store_data_file(filename, TOKENIZED_DATA_DIR, 'clean_data', clean_data_pdf)
         iteration = iteration + 1
 
     log_time("Finished")
