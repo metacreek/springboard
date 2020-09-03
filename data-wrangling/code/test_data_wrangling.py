@@ -163,6 +163,7 @@ def test_setup_regex_cleanup():
     for key, value in substitution.items():
         assert key in value
 
+
 def test_clean_text():
     text = "the long brown horse"
     reg = "long"
@@ -170,9 +171,11 @@ def test_clean_text():
     result = data_wrangling.clean_text(arr)
     assert result == "the   brown horse"
 
+
 def test_add_regex():
     regex = data_wrangling.add_regex('msnbc.com')
     assert regex == '(MSNBC|msnbc.com|\n)'
+
 
 def test_get_tokens():
     data_wrangling.setup_stopwords(sc)
@@ -181,3 +184,27 @@ def test_get_tokens():
     tokenizer = data_wrangling.get_tokenizer(bert_layer)
     tokens = data_wrangling.get_tokens("the red house")
     assert tokens == ['[CLS]', 'red', 'house', '[SEP]']
+
+
+def test_get_masks():
+    data_wrangling.setup_max_seq_len(sc)
+    masks = data_wrangling.get_masks("the red round dog follows the bird")
+    answer = (34 * [1]) + (222 * [0])
+    assert masks == answer
+
+
+def test_get_segments():
+    data_wrangling.setup_max_seq_len(sc)
+    segments = data_wrangling.get_segments("the yellow round bird is in the kitchen")
+    answer = (256 * [0])
+    assert segments == answer
+
+
+def test_get_ids():
+    data_wrangling.setup_max_seq_len(sc)
+    tokens = ['[CLS]', 'red', 'house', '[SEP]']
+    ids = data_wrangling.get_ids(tokens)
+    print(ids)
+    answer = [101, 2417, 2160, 102] + (252 * [0])
+    assert ids == answer
+
