@@ -208,3 +208,19 @@ def test_get_ids():
     answer = [101, 2417, 2160, 102] + (252 * [0])
     assert ids == answer
 
+
+def test_get_source_domains():
+    input_sdf = sql_context.createDataFrame(
+        [
+            (1, 'cnn.com'),
+            (1, 'time.com'),
+            (1, 'cnn.com'),
+            (1, 'cnn.com'),
+        ],
+        [
+            'id',
+            'source_domain'
+        ]
+    )
+    output_sdf = data_wrangling.get_source_domains(input_sdf)
+    assert output_sdf == {'cnn.com': 0, 'time.com': 1}
