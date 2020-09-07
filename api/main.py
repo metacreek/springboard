@@ -4,11 +4,8 @@ from oauth2client.client import GoogleCredentials
 from googleapiclient import discovery
 from googleapiclient import errors
 import json
-
-try:
-    from . import tokenizer as tok
-except:
-    import tokenizer as tok
+import tokenizer as tok
+import pandas as pd
 
 MAX_SEQ_LEN = 256
 
@@ -28,57 +25,16 @@ def get_stopwords():
     return stop_words
 
 
-
-lookup = {0: 'ajc.com',
-          1: 'americanthinker.com',
-          2: 'apnews.com',
-          3: 'axios.com',
-          4: 'bbc.com',
-          5: 'boston.com',
-          6: 'breitbart.com',
-          7: 'cbsnews.com',
-          8: 'chicago.suntimes.com',
-          9: 'chicagotribune.com',
-          10: 'chron.com',
-          11: 'cnbc.com',
-          12: 'dailykos.com',
-          13: 'dallasnews.com',
-          14: 'denverpost.com',
-          15: 'economist.com',
-          16: 'fivethirtyeight.com',
-          17: 'forbes.com',
-          18: 'foreignpolicy.com',
-          19: 'foxnews.com',
-          20: 'ft.com',
-          21: 'latimes.com',
-          22: 'msnbc.com',
-          23: 'nbcnews.com',
-          24: 'newrepublic.com',
-          25: 'newsday.com',
-          26: 'newsmax.com',
-          27: 'npr.org',
-          28: 'nydailynews.com',
-          29: 'nypost.com',
-          30: 'nytimes.com',
-          31: 'prospect.org',
-          32: 'reason.com',
-          33: 'reuters.com',
-          34: 'rt.com',
-          35: 'seattletimes.com',
-          36: 'slate.com',
-          37: 'theatlantic.com',
-          38: 'theblaze.com',
-          39: 'thehill.com',
-          40: 'thenation.com',
-          41: 'time.com',
-          42: 'utne.com',
-          43: 'vox.com',
-          44: 'washingtonexaminer.com',
-          45: 'washingtonpost.com',
-          46: 'wsj.com'}
+def lookup():
+    store = pd.HDFStore('domain_lookup.h5')
+    reverse_lookup = store['domain_lookup']
+    store.close()
+    dict_items = reverse_lookup.to_dict().items()
+    lookup = {value: key for (key, value) in dict_items}
+    return lookup
 
 
-sites = list(lookup.values())
+sites = list(lookup().values())
 print(type(sites), sites)
 columns = 5
 length = len(sites)
@@ -181,7 +137,7 @@ def analyze(request):
 
         for i in range(1, 4):
             score, idx, predictions = get_next_highest(predictions)
-            results.append((score * 100, idx, lookup[idx]))
+            results.append((score * 100, idx, lookup()[idx]))
 
     print("@@@@@", results)
     return render_template('main.html', text=text, sites=sites, columns=5,
