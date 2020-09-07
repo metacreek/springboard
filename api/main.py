@@ -7,10 +7,7 @@ import json
 import tokenizer as tok
 import pandas as pd
 
-MAX_SEQ_LEN = 256
 
-tokenator = None
-stop_words = None
 
 def get_tokenizer():
     global tokenator
@@ -32,13 +29,6 @@ def lookup():
     dict_items = reverse_lookup.to_dict().items()
     lookup = {value: key for (key, value) in dict_items}
     return lookup
-
-
-sites = list(lookup().values())
-print(type(sites), sites)
-columns = 5
-length = len(sites)
-items = length // columns + 1
 
 def get_masks(tokens, max_seq_length):
     return [1]*len(tokens) + [0] * (max_seq_length - len(tokens))
@@ -75,6 +65,20 @@ def create_single_input(sentence, MAX_LEN):
     segments = get_segments(stokens, MAX_SEQ_LEN)
 
     return ids, masks, segments
+
+
+def sites():
+    return list(lookup().values())
+
+MAX_SEQ_LEN = 256
+
+tokenator = None
+stop_words = None
+
+columns = 5
+length = len(sites())
+items_per_column = length // columns + 1
+
 
 tokenator = get_tokenizer()
 stop_words = get_stopwords()
@@ -140,5 +144,5 @@ def analyze(request):
             results.append((score * 100, idx, lookup()[idx]))
 
     print("@@@@@", results)
-    return render_template('main.html', text=text, sites=sites, columns=5,
-                           length=length, items=items, results=results)
+    return render_template('main.html', text=text, sites=sites(), columns=5,
+                           length=length, items=items_per_column, results=results)
