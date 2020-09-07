@@ -48,6 +48,5 @@ def test_create_single_input():
 def test_get_next_highest():
     predictions = [[0.3, 0.2, 0.1]]
     next_highest = main.get_next_highest(predictions)
-    print(next_highest)
     assert next_highest == (0.3, 0, [0])
 

@@ -3,7 +3,6 @@ from flask import render_template
 from oauth2client.client import GoogleCredentials
 from googleapiclient import discovery
 from googleapiclient import errors
-import json
 import tokenizer as tok
 import pandas as pd
 
@@ -75,15 +74,15 @@ def get_segments(tokens, max_seq_length):
 
 def get_ids(tokens, max_seq_length):
     """Token ids from Tokenizer vocab"""
-    tokenizer = get_tokenizer()
-    token_ids = tokenizer.convert_tokens_to_ids(tokens,)
+    tok = get_tokenizer()
+    token_ids = tok.convert_tokens_to_ids(tokens, )
     input_ids = token_ids + [0] * (max_seq_length-len(token_ids))
     return input_ids
 
 
 def create_single_input(sentence, MAX_LEN):
-    tokenizer = get_tokenizer()
-    stokens = tokenizer.tokenize(sentence)
+    tok = get_tokenizer()
+    stokens = tok.tokenize(sentence)
     stokens = [token for token in stokens if token not in get_stopwords()]
     stokens = stokens[:MAX_LEN]
     stokens = ["[CLS]"] + stokens + ["[SEP]"]
@@ -95,13 +94,45 @@ def create_single_input(sentence, MAX_LEN):
 
 
 def get_next_highest(scores):
-    max = np.max(scores)
+    """
+    returns the max value, the index of the max value, and the rest of the predictions after the max value is zeroed out
+
+    :param scores: prediction data structure returned by prediction service
+    """
+    max_score = np.max(scores)
     idx = np.argmax(scores)
     scores[idx] = 0
-    return max, idx, scores
+    return max_score, idx, scores
+
+
+def call_prediction_service(ids, masks, segments):
+    """
+    Calls the google api prediction service to get document predictions
+
+    :param ids: ids determined during tokenization
+    :param masks: masks determined during tokenization
+    :param segments: segments determined during tokenization
+    """
+    service = discovery.build('ml', 'v1')
+    name = 'projects/topic-sentiment-269614/models/springboard_capstone_project'
+    body = {
+        "instances": [{
+            "input_word_ids": ids,
+            "input_mask": masks,
+            "segment_ids": segments}]
+    }
+    response = service.projects().predict(
+        name=name, body=body
+    ).execute()
+    return response
 
 
 def analyze(request):
+    """
+    Main function used to present UI and process predictions
+
+    :param request: flask request object
+    """
     results = []
     text = ""
     request_json = request.get_json(silent=True)
@@ -114,18 +145,7 @@ def analyze(request):
     if text:
         ids, masks, segments = create_single_input(text, MAX_SEQ_LEN-2)
 
-        service = discovery.build('ml', 'v1')
-        name = 'projects/topic-sentiment-269614/models/springboard_capstone_project'
-        body = {
-            "instances": [{
-            "input_word_ids": ids,
-            "input_mask": masks,
-            "segment_ids": segments}]
-        }
-
-        response = service.projects().predict(
-            name=name, body=body
-        ).execute()
+        response = call_prediction_service(ids, masks, segments)
 
         if 'error' in response:
             raise RuntimeError(response['error'])
@@ -139,3 +159,4 @@ def analyze(request):
 
     return render_template('main.html', text=text, sites=sites(), columns=5,
                            length=number_of_sites, items=items_per_column, results=results)
+
