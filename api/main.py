@@ -10,15 +10,15 @@ import pandas as pd
 
 
 def get_tokenizer():
-    global tokenator
-    tokenator = tok.FullTokenizer(vocab_file='vocab.txt', do_lower_case=True)
-    return tokenator
+    if 'tokenizer' not in globals():
+        global tokenizer
+        tokenizer = tok.FullTokenizer(vocab_file='vocab.txt', do_lower_case=True)
+    return tokenizer
 
 
 def get_stopwords():
     if 'stopwords' not in globals():
         global stopwords
-        print("@@@@@@@@@@@@@@@@@@@ Reading stopwords @@@@@@@@@@@@@@@@@@@")
         with open('stopwords', 'r') as f:
             stopwords = f.read()
     return stopwords
@@ -47,14 +47,15 @@ def get_segments(tokens, max_seq_length):
 
 def get_ids(tokens, max_seq_length):
     """Token ids from Tokenizer vocab"""
-    tokenator = get_tokenizer()
-    token_ids = tokenator.convert_tokens_to_ids(tokens,)
+    tokenizer = get_tokenizer()
+    token_ids = tokenizer.convert_tokens_to_ids(tokens,)
     input_ids = token_ids + [0] * (max_seq_length-len(token_ids))
     return input_ids
 
 
 def create_single_input(sentence, MAX_LEN):
-    stokens = tokenator.tokenize(sentence)
+    tokenizer = get_tokenizer()
+    stokens = tokenizer.tokenize(sentence)
     stokens = [token for token in stokens if not token in get_stopwords()]
 
     stokens = stokens[:MAX_LEN]
@@ -73,13 +74,9 @@ def sites():
 
 MAX_SEQ_LEN = 256
 
-tokenator = None
-
 columns = 5
 length = len(sites())
 items_per_column = length // columns + 1
-
-tokenator = get_tokenizer()
 
 def get_next_highest(scores):
     print(type(scores), scores)
