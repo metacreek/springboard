@@ -16,10 +16,12 @@ def get_tokenizer():
 
 
 def get_stopwords():
-    global stop_words
-    with open('stopwords', 'r') as f:
-        stop_words = f.read()
-    return stop_words
+    if 'stopwords' not in globals():
+        global stopwords
+        print("@@@@@@@@@@@@@@@@@@@ Reading stopwords @@@@@@@@@@@@@@@@@@@")
+        with open('stopwords', 'r') as f:
+            stopwords = f.read()
+    return stopwords
 
 
 def lookup():
@@ -52,9 +54,8 @@ def get_ids(tokens, max_seq_length):
 
 
 def create_single_input(sentence, MAX_LEN):
-    global stop_words
     stokens = tokenator.tokenize(sentence)
-    stokens = [token for token in stokens if not token in stop_words]
+    stokens = [token for token in stokens if not token in get_stopwords()]
 
     stokens = stokens[:MAX_LEN]
 
@@ -73,15 +74,12 @@ def sites():
 MAX_SEQ_LEN = 256
 
 tokenator = None
-stop_words = None
 
 columns = 5
 length = len(sites())
 items_per_column = length // columns + 1
 
-
 tokenator = get_tokenizer()
-stop_words = get_stopwords()
 
 def get_next_highest(scores):
     print(type(scores), scores)
