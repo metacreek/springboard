@@ -1,5 +1,6 @@
 import pytest
 import main
+import os
 
 MAX_SEQ_LEN = 256
 
@@ -49,4 +50,12 @@ def test_get_next_highest():
     predictions = [[0.3, 0.2, 0.1]]
     next_highest = main.get_next_highest(predictions)
     assert next_highest == (0.3, 0, [0])
+
+
+def test_lookup_path():
+    val = main.lookup_path()
+    assert val == 'prod1'
+    os.environ["DOMAIN_LOOKUP_PATH"] = 'bbb'
+    val = main.lookup_path()
+    assert val == 'bbb'
 

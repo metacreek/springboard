@@ -6,6 +6,11 @@ from google.cloud import storage
 from googleapiclient import errors
 import tokenizer as tok
 import pandas as pd
+import os
+
+# This code uses the following environment variables:
+#   GOOGLE_APPLICATION_CREDENTIALS: file location of credentials for running on development
+#   DOMAIN_LOOKUP_PATH: path to domain_lookup.h5 file to use
 
 MAX_SEQ_LEN = 256  # This must be same value used in wrangling.  This is the number of tokens used in document analysis.
 columns = 5  # Number of columns to use in site dropdown in frontend
@@ -29,12 +34,21 @@ def setup_lookup():
     """
     storage_client = storage.Client()
     bucket = storage_client.bucket('topic-sentiment-1')
-    blob = bucket.blob('prod1/domain_lookup.h5')
+    blob = bucket.blob(f'{lookup_path()}/domain_lookup.h5')
     blob.download_to_filename('domain_lookup.h5')
     store = pd.HDFStore('domain_lookup.h5')
     reverse_lookup = store['domain_lookup']
     store.close()
     return reverse_lookup
+
+
+def lookup_path():
+    """
+    Returns the lookup path for the domain_lookup.h5 file, from an env variable or a default value if not found
+    """
+    return os.environ.get('DOMAIN_LOOKUP_PATH', 'prod1')
+
+
 
 def sites():
     """
