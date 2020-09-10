@@ -2,6 +2,7 @@ import numpy as np
 from flask import render_template
 from oauth2client.client import GoogleCredentials
 from googleapiclient import discovery
+from google.cloud import storage
 from googleapiclient import errors
 import tokenizer as tok
 import pandas as pd
@@ -12,16 +13,28 @@ columns = 5  # Number of columns to use in site dropdown in frontend
 
 def lookup():
     """
-    Returns a dictionary that contains numerical keys for sitenames.  These are
-    loaded from 'domain_lookup.h5', which is created during data wrangling.
+    Returns a dictionary that contains numerical keys for sitenames.
     """
+    if 'site_lookup' not in globals():
+        global site_lookup
+        reverse_lookup = setup_lookup()
+        dict_items = reverse_lookup.to_dict().items()
+        site_lookup = {value: key for (key, value) in dict_items}
+    return site_lookup
+
+
+def setup_lookup():
+    """
+    Returns the site lookup data from the domain lookup file created during data wrangling.
+    """
+    storage_client = storage.Client()
+    bucket = storage_client.bucket('topic-sentiment-1')
+    blob = bucket.blob('prod1/domain_lookup.h5')
+    blob.download_to_filename('domain_lookup.h5')
     store = pd.HDFStore('domain_lookup.h5')
     reverse_lookup = store['domain_lookup']
     store.close()
-    dict_items = reverse_lookup.to_dict().items()
-    lookup = {value: key for (key, value) in dict_items}
-    return lookup
-
+    return reverse_lookup
 
 def sites():
     """
