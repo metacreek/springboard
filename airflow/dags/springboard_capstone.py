@@ -7,6 +7,8 @@ from airflow.models import Variable
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.contrib.operators.dataproc_operator import DataprocClusterCreateOperator, \
     DataprocClusterDeleteOperator, DataProcPySparkOperator
+from airflow.contrib.operators.gcp_function_operator import GcfFunctionDeleteOperator, \
+    GcfFunctionDeployOperator
 # from airflow.providers.google.cloud.operators.compute import ComputeEngineStartInstanceOperator
 from airflow.utils.dates import days_ago
 from datetime import timedelta
@@ -90,6 +92,20 @@ delete_spark = DataprocClusterDeleteOperator(
 #     gcp_conn_id="deeplearning-platform-release"
 #
 # )
+
+
+delete_cloud_function = GcfFunctionDeleteOperator(
+    task_id='delete_function',
+    name='analyze-ui'
+)
+
+
+deploy_cloud_function = GcfFunctionDeployOperator(
+    task_id='create_function',
+    project_id=PROJECT,
+    location=
+)
+
 
 # Dag definition
 begin >> create_spark >> run_spark >> delete_spark >> end
