@@ -140,7 +140,7 @@ def call_prediction_service(ids, masks, segments):
     :param masks: masks determined during tokenization
     :param segments: segments determined during tokenization
     """
-    service = discovery.build('ml', 'v1')
+    service = discovery.build('ml', 'v1', cache_discovery=False)
     name = 'projects/topic-sentiment-269614/models/springboard_capstone_project'
     body = {
         "instances": [{
