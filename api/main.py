@@ -25,7 +25,6 @@ def lookup():
         reverse_lookup = setup_lookup()
         dict_items = reverse_lookup.to_dict().items()
         site_lookup = {value: key for (key, value) in dict_items}
-        print(f"@@@@@@@ size of lookup: {len(site_lookup.keys())}")
     return site_lookup
 
 
