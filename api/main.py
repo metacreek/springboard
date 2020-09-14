@@ -35,8 +35,8 @@ def setup_lookup():
     storage_client = storage.Client()
     bucket = storage_client.bucket('topic-sentiment-1')
     blob = bucket.blob(f'{lookup_path()}/domain_lookup.h5')
-    blob.download_to_filename('domain_lookup.h5')
-    store = pd.HDFStore('domain_lookup.h5')
+    blob.download_to_filename('/tmp/domain_lookup.h5')
+    store = pd.HDFStore('/tmp/domain_lookup.h5')
     reverse_lookup = store['domain_lookup']
     store.close()
     return reverse_lookup
