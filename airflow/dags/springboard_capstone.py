@@ -93,19 +93,24 @@ delete_spark = DataprocClusterDeleteOperator(
 #
 # )
 
+function_body = {
+    "name": "projects/topic-sentiment-269614/locations/us-east1/functions/analyze-ui",
+    "entryPoint": "analyze",
+    "runtime": "python37",
+    "httpsTrigger": {},
+    "sourceRepository":  {
+    "url": "https://source.developers.google.com/projects/topic-sentiment-269614/repos/github_metacreek_springboard/moveable-aliases/master/paths/api"
+  }
 
-delete_cloud_function = GcfFunctionDeleteOperator(
-    task_id='delete_function',
-    name='analyze-ui'
-)
-
+}
 
 deploy_cloud_function = GcfFunctionDeployOperator(
     task_id='create_function',
     project_id=PROJECT,
-    location=
+    location=REGION,
+    body=function_body
 )
 
 
 # Dag definition
-begin >> create_spark >> run_spark >> delete_spark >> end
+begin >> deploy_cloud_function >> create_spark >> run_spark >> delete_spark >> end
