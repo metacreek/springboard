@@ -7,5 +7,6 @@
   "WORKER_MACHINE_TYPE": "n1-highmem-4",
   "ZONE": "us-east1-c",
   "RAW_DATA": "gs://topic-sentiment-1/combined/",
-  "TOKENIZED_DATA_DIR": "tokenized"
+  "TOKENIZED_DATA_DIR": "tokenized",
+  "THRESHOLD": 20000
 }

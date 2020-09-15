@@ -7,6 +7,8 @@ from airflow.models import Variable
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.contrib.operators.dataproc_operator import DataprocClusterCreateOperator, \
     DataprocClusterDeleteOperator, DataProcPySparkOperator
+from airflow.contrib.operators.gcp_function_operator import GcfFunctionDeleteOperator, \
+    GcfFunctionDeployOperator
 # from airflow.providers.google.cloud.operators.compute import ComputeEngineStartInstanceOperator
 from airflow.utils.dates import days_ago
 from datetime import timedelta
@@ -20,8 +22,9 @@ PROJECT = Variable.get('PROJECT')
 ZONE = Variable.get('ZONE')
 REGION = Variable.get('REGION')
 START_DATE = datetime.datetime(2020, 1, 1)
-RAW_DATA = Variable.get("RAW_DATA")
-TOKENIZED_DATA_DIR = Variable.get("TOKENIZED_DATA_DIR")
+RAW_DATA = Variable.get('RAW_DATA')
+TOKENIZED_DATA_DIR = Variable.get('TOKENIZED_DATA_DIR')
+THRESHOLD = Variable.get('THRESHOLD')
 
 INTERVAL = '@once'
 
@@ -67,7 +70,7 @@ create_spark = DataprocClusterCreateOperator(
 
 run_spark = DataProcPySparkOperator(
     main='gs://topic-sentiment-1/code/data_wrangling.py',
-    arguments=[RAW_DATA, TOKENIZED_DATA_DIR],
+    arguments=[RAW_DATA, TOKENIZED_DATA_DIR, THRESHOLD],
     task_id='run_spark',
     cluster_name=SPARK_CLUSTER,
     region=REGION,
@@ -90,6 +93,25 @@ delete_spark = DataprocClusterDeleteOperator(
 #     gcp_conn_id="deeplearning-platform-release"
 #
 # )
+
+function_body = {
+    "name": "projects/topic-sentiment-269614/locations/us-east1/functions/analyze-ui",
+    "entryPoint": "analyze",
+    "runtime": "python37",
+    "httpsTrigger": {},
+    "sourceRepository":  {
+    "url": "https://source.developers.google.com/projects/topic-sentiment-269614/repos/github_metacreek_springboard/fixed-aliases/production-api/paths/api"
+  }
+
+}
+
+deploy_cloud_function = GcfFunctionDeployOperator(
+    task_id='create_function',
+    project_id=PROJECT,
+    location=REGION,
+    body=function_body
+)
+
 
 # Dag definition
 begin >> create_spark >> run_spark >> delete_spark >> end
