@@ -1,9 +1,9 @@
 import numpy as np
 from flask import render_template
-from oauth2client.client import GoogleCredentials
+#from oauth2client.client import GoogleCredentials
 from googleapiclient import discovery
 from google.cloud import storage
-from googleapiclient import errors
+#from googleapiclient import errors
 import tokenizer as tok
 import pandas as pd
 import os
@@ -35,8 +35,8 @@ def setup_lookup():
     storage_client = storage.Client()
     bucket = storage_client.bucket('topic-sentiment-1')
     blob = bucket.blob(f'{lookup_path()}/domain_lookup.h5')
-    blob.download_to_filename('domain_lookup.h5')
-    store = pd.HDFStore('domain_lookup.h5')
+    blob.download_to_filename('/tmp/domain_lookup.h5')
+    store = pd.HDFStore('/tmp/domain_lookup.h5')
     reverse_lookup = store['domain_lookup']
     store.close()
     return reverse_lookup
@@ -46,7 +46,7 @@ def lookup_path():
     """
     Returns the lookup path for the domain_lookup.h5 file, from an env variable or a default value if not found
     """
-    return os.environ.get('DOMAIN_LOOKUP_PATH', 'prod1')
+    return os.environ.get('DOMAIN_LOOKUP_PATH', 'models/model5c')
 
 
 
@@ -140,7 +140,7 @@ def call_prediction_service(ids, masks, segments):
     :param masks: masks determined during tokenization
     :param segments: segments determined during tokenization
     """
-    service = discovery.build('ml', 'v1')
+    service = discovery.build('ml', 'v1', cache_discovery=False)   # https://stackoverflow.com/a/60730089/914544
     name = 'projects/topic-sentiment-269614/models/springboard_capstone_project'
     body = {
         "instances": [{
