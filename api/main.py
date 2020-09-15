@@ -46,7 +46,7 @@ def lookup_path():
     """
     Returns the lookup path for the domain_lookup.h5 file, from an env variable or a default value if not found
     """
-    return os.environ.get('DOMAIN_LOOKUP_PATH', 'prod1')
+    return os.environ.get('DOMAIN_LOOKUP_PATH', 'models/model5c')
 
 
 
@@ -140,7 +140,7 @@ def call_prediction_service(ids, masks, segments):
     :param masks: masks determined during tokenization
     :param segments: segments determined during tokenization
     """
-    service = discovery.build('ml', 'v1')
+    service = discovery.build('ml', 'v1', cache_discovery=False)   # https://stackoverflow.com/a/60730089/914544
     name = 'projects/topic-sentiment-269614/models/springboard_capstone_project'
     body = {
         "instances": [{
