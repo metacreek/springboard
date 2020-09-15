@@ -7,5 +7,6 @@
   "WORKER_MACHINE_TYPE": "n1-standard-1",
   "ZONE": "us-east1-c",
   "RAW_DATA": "gs://topic-sentiment-1/test_raw_data/sample3.json",
-  "TOKENIZED_DATA_DIR": "test_tokenized"
+  "TOKENIZED_DATA_DIR": "test_tokenized",
+  "THRESHOLD": 100
 }

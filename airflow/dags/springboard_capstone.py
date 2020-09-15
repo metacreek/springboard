@@ -22,8 +22,9 @@ PROJECT = Variable.get('PROJECT')
 ZONE = Variable.get('ZONE')
 REGION = Variable.get('REGION')
 START_DATE = datetime.datetime(2020, 1, 1)
-RAW_DATA = Variable.get("RAW_DATA")
-TOKENIZED_DATA_DIR = Variable.get("TOKENIZED_DATA_DIR")
+RAW_DATA = Variable.get('RAW_DATA')
+TOKENIZED_DATA_DIR = Variable.get('TOKENIZED_DATA_DIR')
+THRESHOLD = Variable.get('THRESHOLD')
 
 INTERVAL = '@once'
 
@@ -69,7 +70,7 @@ create_spark = DataprocClusterCreateOperator(
 
 run_spark = DataProcPySparkOperator(
     main='gs://topic-sentiment-1/code/data_wrangling.py',
-    arguments=[RAW_DATA, TOKENIZED_DATA_DIR],
+    arguments=[RAW_DATA, TOKENIZED_DATA_DIR, THRESHOLD],
     task_id='run_spark',
     cluster_name=SPARK_CLUSTER,
     region=REGION,
@@ -99,7 +100,7 @@ function_body = {
     "runtime": "python37",
     "httpsTrigger": {},
     "sourceRepository":  {
-    "url": "https://source.developers.google.com/projects/topic-sentiment-269614/repos/github_metacreek_springboard/moveable-aliases/master/paths/api"
+    "url": "https://source.developers.google.com/projects/topic-sentiment-269614/repos/github_metacreek_springboard/fixed-aliases/production-api/paths/api"
   }
 
 }
@@ -113,4 +114,4 @@ deploy_cloud_function = GcfFunctionDeployOperator(
 
 
 # Dag definition
-begin >> deploy_cloud_function >> create_spark >> run_spark >> delete_spark >> end
+begin >> create_spark >> run_spark >> delete_spark >> end
