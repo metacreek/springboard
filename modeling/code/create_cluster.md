@@ -25,7 +25,7 @@ gcloud dataproc clusters create features1 \
   --image-version 1.4.22-debian9 \
   --num-workers 2 \
   --initialization-actions gs://goog-dataproc-initialization-actions-us-east1/python/pip-install.sh \
-  --metadata 'PIP_PACKAGES=tensorflow==2.0.0 pyarrow==0.15.1 sentencepiece==0.1.85 gcsfs nltk tensorflow-hub tables bert-for-tf2 absl-py google-cloud-storage'  
+  --metadata 'PIP_PACKAGES=tensorflow==2.0.0 pyarrow==0.15.1 sentencepiece==0.1.85 gcsfs nltk tensorflow-hub tables bert-for-tf2 absl-py google-cloud-storage google-cloud-logging'  
 
 
 ### Setup allowing Jupyter usage
