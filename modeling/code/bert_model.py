@@ -14,13 +14,16 @@ LOCAL_DATA_DIR = 'data'  # relative name of local directory where input files wi
 LOCAL_MODEL_DIR = 'model'  # relative name of local directory where final model is saved
 LOCAL_CHECKPOINT_DIR = 'checkpoint'  # relative name of local directory where checkpoint files are saved
 LOCAL_TEST_OUTPUT_DIR = 'output'  # relative name of local directory where supplementary output is saved
-TOKENIZED_DATA_DIR = 'tokenized'  # name of bucket subdirectory where input files will be copied from
-BUCKET_RESULTS_DIR = 'prod3'  # name of bucket subdirectory where output files will be copied to
+TOKENIZED_DATA_DIR = 'test_tokenized'  # name of bucket subdirectory where input files will be copied from
+BUCKET_RESULTS_DIR = 'test-docker'  # name of bucket subdirectory where output files will be copied to
+
+
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '/home/credentials/topic-sentiment-dfad6f039359.json'
 
 # set up logger
-logging_client = logging.Client()
-log_name = 'modeling'
-logger = logging_client.logger(log_name)
+# logging_client = logging.Client()
+# log_name = 'modeling'
+# logger = logging_client.logger(log_name)
 
 
 def log_time(msg):
@@ -29,7 +32,7 @@ def log_time(msg):
     """
     message = f"@@@@ {msg} {datetime.now()}"
     print(message)
-    logger.log_text(message)
+    # logger.log_text(message)
 
 
 def get_hdf_from_file(filename, key):
@@ -46,7 +49,7 @@ def load_data():
     """
     Loads data used for modeling
     """
-    gsutilwrap.copy(pattern=f"{BUCKET}/{TOKENIZED_DATA_DIR}/", target=f"{LOCAL_DATA_DIR}/", recursive=True)
+    # gsutilwrap.copy(pattern=f"{BUCKET}/{TOKENIZED_DATA_DIR}/", target=f"{LOCAL_DATA_DIR}/", recursive=True)
     data_array = []
     for i in range(0, 10):
         df = get_hdf_from_file(f'{LOCAL_DATA_DIR}/tokens_{i}.h5', 'clean_data')
@@ -98,8 +101,8 @@ def save_results_to_bucket():
 
 log_time("Begin")
 
-logger.log_text(f"TensorFlow Version: {tf.__version__}")
-logger.log_text(f"Hub version: {hub.__version__}")
+log_time(f"TensorFlow Version: {tf.__version__}")
+log_time(f"Hub version: {hub.__version__}")
 
 log_time("load data")
 all_data_pdf = load_data()
@@ -108,15 +111,15 @@ log_time("load domain lookup")
 domain_lookup = get_hdf_from_file(f'{LOCAL_DATA_DIR}/domain_lookup.h5', 'domain_lookup')
 
 counts = all_data_pdf.groupby('source_index').source_domain.count().reset_index()
-logger.log_text(f"Data count by domain: {counts}")
+log_time(f"Data count by domain: {counts}")
 
 NUM_CLASSES = len(domain_lookup)
-logger.log_text(f"Number of classes:  {NUM_CLASSES}")
+log_time(f"Number of classes:  {NUM_CLASSES}")
 
 all_source_index = all_data_pdf['source_index'].values
 all_y_array = to_categorical(all_source_index)
 
-logger.log_text(f"Number of data points: {len(all_y_array)}")
+log_time(f"Number of data points: {len(all_y_array)}")
 
 log_time("Split data")
 X_train, X_test,  y_train, y_test, index_train, index_test = \
@@ -189,10 +192,10 @@ pd.Series(index_test).to_pickle(f'{LOCAL_TEST_OUTPUT_DIR}/index_test.pickle')
 y_comparison['correct'] = (y_comparison.actual == y_comparison.prediction)
 
 overall_acc = y_comparison.correct.mean()
-logger.log_text(f"Overall accuracy: {overall_acc}")
+log_time(f"Overall accuracy: {overall_acc}")
 
 pub_averages = y_comparison.groupby('actual').correct.mean()
-logger.log_text(pub_averages)
+log_time(pub_averages)
 
 log_time("Copy output to bucket")
 save_results_to_bucket()
