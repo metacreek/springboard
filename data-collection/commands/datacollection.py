@@ -52,7 +52,7 @@ def get_crawlers():
     """
     Returns list of process ids for crawler processes
     """
-    f = os.popen("ps ax | grep single_crawler | grep -v grep | cut -d ' '  -f 2", 'r', 10240)
+    f = os.popen("ps ax | grep single_crawler | grep -v grep | cut -c 1-5", 'r', 10240)
     values = f.read().split('\n')
     if '' in values:
         values.remove('')

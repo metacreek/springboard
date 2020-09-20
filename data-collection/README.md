@@ -1,50 +1,35 @@
-This section of the repository contains code used to collect the JSON article files from a set of websites.
+# Data Collection
 
-The crawling is done using the [news-please](https://github.com/fhamborg/news-please) package.
+Data collection is performed using the provided Docker container.  To build the container:
 
-## EC2 Configuration
+    docker build .
 
-Create an instance based on the **Anaconda3 2019.10 on Amazon Linux 20191018.1855** AMI.
+Note the image_id that is reported as built.  The crawling process takes three arguments, which are passed as environment
+variables to the docker container.  These are:
 
-Once the instance is created, get the public IP address and set an environment variables named EC_CRAWLER
+* BEFORE:  limit the crawl to articles published after this many days before today.  See note below. 
+* USER_AGENT: 'default' or 'googlebot'.  Identifies the user agent used for crawling.
+* SITELIST: 'sitelist_default', 'sitelist_googlebot_a', or 'sitelist_googlebot_b'.  The sites to be crawled, as described in the configuration files built into the container.
 
-Create rule(s) as necessary so that you have inbound ssh access from your local machine (port 22)
+Once the container is built, you can run it using:
 
-The secret file is springboard.pem and is sorted in ~/.aws
+    docker run [image_id] -e "BEFORE=20" -e "USER_AGENT=default" -e "SITELIST=sitelist_default"
 
-Set EC_CRAWLER to the IP address of your instance
+Note that some site appear in multiple sitelist files because my analysis found those sites would report different pages 
+depending on the user agent that was used.  
+ 
+NOTE: the BEFORE argument specifies a start_date configuration parameter.
+Unfortunately, the crawler treats this as a suggestion, so I generally found it necessary to kill the crawler after it had
+crawled a sufficient number of pages.  To do this, connect to the docker container:
 
-To connect to the crawler instance:
-
-    ssh -i ~/.aws/springboard.pem ec2-user@$EC_CRAWLER
-
-## Initial setup
-
-Connect to the crawler instance and execute the following commands:
-
-    mkdir news-please-repo
-    pip install news-please
-
-You must also run the `aws configure` command and set your secrets and region.
-
-## Sync code
-
-From your local **data-collection** directory, run:
-
-    scp -r -i ~/.aws/springboard.pem config commands ec2-user@$EC_CRAWLER:/home/ec2-user/news-please-repo
+    docker exec -it [container_id] /bin/bash
     
-## Run crawler
+Then inside the container run:
 
-Currently, the crawler is run manually:
+    python commands/kill_all.py
+    
+Finally, copy the data to the AWS buckets by running:
 
-    cd ~/news-please-repo/commands
-    python start.py
-
-## Copy data to S3
-
-In the following, my data is stored in the **topic-sentiment-1** S3 bucket.
-
-From the EC2 instance, in the commands sub-directory:
-
-    ./move_to_aws.sh
-
+    ./commands/copy_to_aws.sh
+    
+The crawling is done using the [news-please](https://github.com/fhamborg/news-please) package.
