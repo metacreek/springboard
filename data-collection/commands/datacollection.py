@@ -5,7 +5,7 @@ import re
 # This module contains utility functions for collection of news stories
 
 # Set BASEDIR to the home directory for data collection
-BASEDIR = '/home/ec2-user/news-please-repo'
+BASEDIR = '/news-please-repo'
 
 
 def start_date(before=0):
@@ -82,7 +82,7 @@ def start_crawlers():
     """
     Starts the news-please crawling service in the background
     """
-    os.system('news-please &')
+    os.system('news-please -c /news-please-repo/config/')
 
 
 def combine():
