@@ -33,8 +33,8 @@ where data was being removed.  In a production system, I would not do this becau
 be immediately evaluated, which slows down the processing significantly.  Removing
 the counts would mean that all the steps could be performed as part of one Spark operation.
 
-## AWS EMR configuration
+## Production code
 
-The following command shows the configuration used for AWS EMR:
-
-    aws emr create-cluster --auto-scaling-role EMR_AutoScaling_DefaultRole --applications Name=Hadoop Name=Hive Name=Spark Name=Livy --bootstrap-actions '[{"Path":"s3://topic-sentiment-1/emr-scripts/emr_bootstrap.sh","Name":"Custom action"}]' --ebs-root-volume-size 10 --ec2-attributes '{"KeyName":"springboard","AdditionalSlaveSecurityGroups":["sg-098ceaa0b4e3e8753"],"InstanceProfile":"EMR_EC2_DefaultRole","SubnetId":"subnet-91129ac8","EmrManagedSlaveSecurityGroup":"sg-0282be9f7f446a030","EmrManagedMasterSecurityGroup":"sg-03c982f39c4d97925","AdditionalMasterSecurityGroups":["sg-e78bf783"]}' --service-role EMR_DefaultRole --enable-debugging --release-label emr-5.28.0 --log-uri 's3n://topic-sentiment-1/emr-logs/' --name 'topic-sentiment-v6' --instance-groups '[{"InstanceCount":2,"EbsConfiguration":{"EbsBlockDeviceConfigs":[{"VolumeSpecification":{"SizeInGB":32,"VolumeType":"gp2"},"VolumesPerInstance":2}]},"InstanceGroupType":"CORE","InstanceType":"m5.xlarge","Name":"Core - 2"},{"InstanceCount":1,"EbsConfiguration":{"EbsBlockDeviceConfigs":[{"VolumeSpecification":{"SizeInGB":32,"VolumeType":"gp2"},"VolumesPerInstance":2}]},"InstanceGroupType":"MASTER","InstanceType":"m5.xlarge","Name":"Master - 1"}]' --scale-down-behavior TERMINATE_AT_TASK_COMPLETION --region us-east-1
+Data wrangling code is in the code subdirectory.  This include pytest code for unit tests of data wrangling routines.  
+Data wrangling is performed as part of the springboard_capstone Airflow DAG.
+See the airflow directory for information on running the code.
