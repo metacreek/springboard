@@ -5,10 +5,9 @@ import datetime
 from airflow import DAG
 from airflow.models import Variable
 from airflow.operators.dummy_operator import DummyOperator
-from airflow.contrib.operators.dataproc_operator import DataprocClusterCreateOperator, \
-    DataprocClusterDeleteOperator, DataProcPySparkOperator
-from airflow.contrib.operators.gcp_function_operator import GcfFunctionDeleteOperator, \
-    GcfFunctionDeployOperator
+from airflow.contrib.operators.gcp_function_operator import GcfFunctionDeployOperator
+from airflow.providers.google.cloud.operators.mlengine import MLEngineCreateVersionOperator, \
+    MLEngineSetDefaultVersionOperator
 from airflow.utils.dates import days_ago
 from datetime import timedelta
 
@@ -43,8 +42,8 @@ default_args = {
 }
 
 # Airflow operators definition
-dag1 = DAG('capstone_workflow',
-           description='Runs cleaning, training, and deployment using an Airflow DAG',
+dag1 = DAG('capstone_workflow_deploy',
+           description='Deploys model to prediction service and function refresh',
            schedule_interval=INTERVAL,
            start_date=START_DATE,
            catchup=False)
@@ -55,38 +54,48 @@ dag1 = DAG('capstone_workflow',
 begin = DummyOperator(task_id='begin', retries=1, dag=dag1)
 end = DummyOperator(task_id='end', retries=1)
 
-create_spark = DataprocClusterCreateOperator(
+
+create_version = MLEngineCreateVersionOperator(
+    task_id="create-version",
     project_id=PROJECT,
-    cluster_name=SPARK_CLUSTER,
-    num_workers=NUMBER_OF_WORKERS,
-    zone=ZONE,
-    init_actions_uris=['gs://goog-dataproc-initialization-actions-us-east1/python/pip-install.sh'],
-    metadata={'PIP_PACKAGES': 'tensorflow==2.0.0 pyarrow==0.15.1 sentencepiece==0.1.85 gcsfs nltk tensorflow-hub tables bert-for-tf2 absl-py google-cloud-storage google-cloud-logging '},
-    image_version='1.4.22-debian9',
-    master_machine_type=MASTER_MACHINE_TYPE,
-    worker_machine_type=WORKER_MACHINE_TYPE,
-    properties={"dataproc:dataproc.logging.stackdriver.job.driver.enable": "true"},
-    region=REGION,
-    task_id='create_spark',
-    dag=dag1
+    model_name=MODEL_NAME,
+    version={
+        "name": VERSION_NAME,
+        "deployment_uri": f'{MODEL_DIR}',
+        "runtime_version": "2.1",
+        "machineType": "mls1-c1-m2",
+        "framework": "TENSORFLOW",
+        "pythonVersion": "3.7",
+    },
 )
 
-run_spark = DataProcPySparkOperator(
-    main='gs://topic-sentiment-1/code/data_wrangling.py',
-    arguments=[RAW_DATA, TOKENIZED_DATA_DIR, THRESHOLD],
-    task_id='run_spark',
-    cluster_name=SPARK_CLUSTER,
-    region=REGION,
-    dag=dag1
-)
-
-
-delete_spark = DataprocClusterDeleteOperator(
-    cluster_name=SPARK_CLUSTER,
+set_defaults_version = MLEngineSetDefaultVersionOperator(
+    task_id="set-default-version",
     project_id=PROJECT,
-    region=REGION,
-    task_id='delete_spark'
+    model_name=MODEL_NAME,
+    version_name=VERSION_NAME,
 )
+
+
+function_body = {
+    "name": "projects/topic-sentiment-269614/locations/us-east1/functions/analyze-ui",
+    "entryPoint": "analyze",
+    "runtime": "python37",
+    "httpsTrigger": {},
+    "sourceRepository":  {
+        "url": "https://source.developers.google.com/projects/topic-sentiment-269614/repos/github_metacreek_springboard/fixed-aliases/production-api/paths/api"
+    },
+    "environmentVariables": {"DOMAIN_LOOKUP_PATH": DOMAIN_LOOKUP_PATH}
+
+}
+
+deploy_cloud_function = GcfFunctionDeployOperator(
+    task_id='create_function',
+    project_id=PROJECT,
+    location=REGION,
+    body=function_body
+)
+
 
 # Dag definition
-begin >> create_spark >> run_spark >> delete_spark >> end
+begin >> create_version >> set_defaults_version >> deploy_cloud_function >> end
