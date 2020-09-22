@@ -20,9 +20,6 @@ def lookup():
     """
     Returns a dictionary that contains numerical keys for sitenames.
     """
-    #domain_lookup = os.getenv('DOMAIN_LOOKUP_PATH', 'bbbbbb')
-    #print(f"@@@@@ domain lookup is {domain_lookup}")
-    print(f"@@@@@ ENVIRONMENT {os.environ}")
     if 'site_lookup' not in globals():
         global site_lookup
         reverse_lookup = setup_lookup()

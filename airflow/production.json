@@ -8,5 +8,9 @@
   "ZONE": "us-east1-c",
   "RAW_DATA": "gs://topic-sentiment-1/combined/",
   "TOKENIZED_DATA_DIR": "tokenized",
-  "THRESHOLD": 20000
+  "THRESHOLD": 20000,
+  "MODEL_NAME": "springboard_capstone_project",
+  "MODEL_DIR": "gs://topic-sentiment-1/prod2/model/",
+  "VERSION_NAME": "mark8",
+  "DOMAIN_LOOKUP_PATH": "prod2"
 }
