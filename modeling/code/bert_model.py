@@ -18,12 +18,12 @@ TOKENIZED_DATA_DIR = 'test_tokenized'  # name of bucket subdirectory where input
 BUCKET_RESULTS_DIR = 'test-docker'  # name of bucket subdirectory where output files will be copied to
 
 
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '/home/credentials/topic-sentiment-dfad6f039359.json'
+#os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '/home/credentials/topic-sentiment-dfad6f039359.json'
 
 # set up logger
-# logging_client = logging.Client()
-# log_name = 'modeling'
-# logger = logging_client.logger(log_name)
+logging_client = logging.Client()
+log_name = 'modeling'
+logger = logging_client.logger(log_name)
 
 
 def log_time(msg):
@@ -32,7 +32,7 @@ def log_time(msg):
     """
     message = f"@@@@ {msg} {datetime.now()}"
     print(message)
-    # logger.log_text(message)
+    logger.log_text(message)
 
 
 def get_hdf_from_file(filename, key):

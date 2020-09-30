@@ -6,3 +6,4 @@ COPY data /home/data
 
 WORKDIR /home
 
+ENTRYPOINT ["python", "bert_model.py"]
