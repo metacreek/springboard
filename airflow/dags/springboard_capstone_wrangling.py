@@ -29,7 +29,7 @@ MODEL_DIR = Variable.get('MODEL_DIR')
 VERSION_NAME = Variable.get('VERSION_NAME')
 DOMAIN_LOOKUP_PATH = Variable.get('DOMAIN_LOOKUP_PATH')
 
-INTERVAL = '@once'
+INTERVAL = None
 
 default_args = {
     'owner': 'airflow',
@@ -43,7 +43,7 @@ default_args = {
 }
 
 # Airflow operators definition
-dag1 = DAG('capstone_workflow',
+dag1 = DAG('capstone_workflow_wrangling',
            description='Runs cleaning, training, and deployment using an Airflow DAG',
            schedule_interval=INTERVAL,
            start_date=START_DATE,
