@@ -28,7 +28,7 @@ MODEL_DIR = Variable.get('MODEL_DIR')
 VERSION_NAME = Variable.get('VERSION_NAME')
 DOMAIN_LOOKUP_PATH = Variable.get('DOMAIN_LOOKUP_PATH')
 
-INTERVAL = '@once'
+INTERVAL = None
 
 default_args = {
     'owner': 'airflow',
