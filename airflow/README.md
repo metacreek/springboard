@@ -26,7 +26,7 @@ This will begin setting up the Airflow system.  This will take approximately 15 
 
 Once the environment is complete you should see something like this:
 
-![Composer Environment listing](./images/composer-home.png)
+![Composer Environment listing](../images/composer-home.png)
 
 ### Configure Airflow variables
 
@@ -34,13 +34,13 @@ Once the environment is complete you should see something like this:
 
 2\. On the Airflow tab, click the Admin top menu item and select Variables
 
-![Variables](./images/variables.png)
+![Variables](../images/variables.png)
 
 3\. Click the Choose File button and navigate to the airflow directory of this repository.   You can choose either 
 'development.json' for a small dataset version of this project, or 'production.json' for the full final version of 
 this project.
 
-![Choose file](./images/variables-import.png)
+![Choose file](../images/variables-import.png)
 
 4\. Click the Import Variables button.  After this loads you will see a list of configuration variables.
 
@@ -52,7 +52,7 @@ this project.
 
 2\. Click the DAGs link under the DAGs folder column.  This will open a Buckets page in a new tab.
 
-![DAGs link](./images/dags-bucket.png)
+![DAGs link](../images/dags-bucket.png)
 
 3\. On the Bucket Details tab, click the Upload Files button.  Upload the files in the airflow/dags folder of this project.
 
@@ -67,17 +67,17 @@ This DAG provisions a Spark environment, rungs the cleaning and wrangling functi
 Normally, this would be run on some schedule, but for the purposes of this project you will trigger it manually by clicking the first button
 in the links column of the Airflow DAGs page.
 
-![Trigger DAG](./images/trigger-dag.png)
+![Trigger DAG](../images/trigger-dag.png)
 
 You can then monitor the running of execution of the steps by clicking on the name
 of this DAG 'capstone_workflow_wrangling'.  I recommend clicking on the
 Graph View tab to see the execution of the steps.
 
-![Graph View](./images/graph-view.png)
+![Graph View](../images/graph-view.png)
 
 As each step completes, its boundary will turn dark green.  When all processes are complete it will look like this:
 
-![DAG complete](./images/complete.png)
+![DAG complete](../images/complete.png)
 
 Click the Airflow logo to return to the main Airflow screen.
 

@@ -2,23 +2,21 @@
 
 ![User Interface](./images/ui.png)
 
-Links to include:
-https://github.com/google-research/bert
-https://ai.googleblog.com/2018/11/open-sourcing-bert-state-of-art-pre.html
-
-In my capstone project, I created a system to handle the full lifecycle for 
+For my capstone project, I created a system to handle the full lifecycle for 
 training and serving a model that attempts to determine the source of a news
-or opinion article from the web based only on the text of the article.
+or opinion article from the web based only on the text of the article.  
 
 For training data, I crawled several news and opinion websites using an open-source
-crawling tool named News Please.  The crawled data was loaded into Spark, where I
+crawling tool named [News Please](https://github.com/fhamborg/news-please).  The crawled data was loaded into Spark, where I
 performed several analyses on the data so that I could determine how to clean and wrangle
 the data for my project.   Some websites were eliminated at this stage because crawling
-returned a very small number of articles were returned from crawling.  I also discovered
-that the returned stories would vary for some sites based on the user agent, so I refined
-the crawling process to take this into account.
+returned a very small number of articles.  I also discovered
+that the returned articles would vary for some sites based on the user agent, so I refined
+the crawling process to take this into account.  You can see some of my analysis in the
+[Jupyter notebooks](https://github.com/metacreek/springboard/tree/master/data-wrangling) in the
+data-wrangling folder of this project.
 
-Websites vary in how they identify themselves in the content.  In some news stories, the name of 
+Websites vary in how they identify themselves in the content.  In some news articles, the name of 
 the publication, website links, and other identifying information was in the body of articles, while on 
 other websites, none of this was present.  I did not want my project to be too easy or trivial, so
 I removed obvious identifying information from news articles.  This included the publication name and website.
@@ -29,34 +27,37 @@ against the data to see common identifying phrases.
 Stop words were also removed from the content, as it seemed to help with the final model.
 
 In recent years, new models have been developed to greatly improve the abilities to perform natural
-language processing (NLP).  One of these models, known as BERT, was released by Google in 2018.  BERT stands
+language processing (NLP).  One of these models, known 
+as [BERT](https://ai.googleblog.com/2018/11/open-sourcing-bert-state-of-art-pre.html), was released by Google in 2018.  BERT stands
 for Bidirectional Encoder Representations from Transformers.  In general, NLP techniques require turning words into
 numbers that can used inside a neural network.  Many models attempt to predict
 what the next word will be based on the preceding words.  BERT attempts to predict
-the word based on the words before **and after** a given word, which is why it is called bidirectional.  The BERT model
-was trained on a large amount of text.
+the word based on the words before **and after** a given word, which is why it is called bidirectional.
 
 What makes BERT so powerful is that even though it was trained on a large quantity of general purpose text, we can
 fine-tune it to use it on a particular use case.   For my capstone, I add a trainable layer at the end of the BERT model.
 This additional layer is used to train against the news articles I collected, and it is set up to predict
 the source of the news articles based on the body text.   This makes the computational effort to achieve this
-task much less than it would be if we started from scratch.
+task much less than it would be if we started from scratch.   The general purpose nature of the BERT model means
+it can be used for other NLP problems like topic modeling or sentiment analysis by applying a different fine-tuning layer
+with training.
 
 The BERT model contains a tokenizer which converts words into numbers based on a complex set of rules.   This tokenizer
 is used in my wrangling code to convert the text for the news articles into numbers.  Note that only the first 256 tokens for
-a news story is used in the analysis.
+a news article is used in the modeling.
 
 The tokenized data is fed into my model, which contains the BERT model, plus an extra layer for fine tuning
 for my data set.   There are many different versions of the BERT model with various sizes available for
 particular use cases.  I made use of the BERT-Base model, which consists of a 12 hidden layers with 768 nodes. To this,
 I added a dropout layer with dropout rate set to 20 percent.  The dropout layer zeros out the results from randomly selected
 nodes.  This is done to add some randomness to the model so that it will generalize better to data it has never seen.  Without this,
-the model may tend to become overly fitted to the data used in training.  The dropout layer connects to a dense
+the model could become overly fitted to the data used in training, causing it to perform worse
+ on data it has never seen.  The dropout layer connects to a dense
 layer with 1024 nodes.  This layer is where the the fine-tuning is captured during training; the BERT layers are frozen and
 are not adjusted as part of training.   This makes the training much faster than trying to train the entire model.  This layer
 is then connected to a "softmax" output layer that has nodes corresponding to the websites used in training.  The 
 softmax layer causes the sum of the outputs of all nodes to equal 1.  This lets us treat each node output as the percentage
-likelihood that a given news story came from the corresponding website.
+likelihood that a given news article came from the corresponding website.
 
 ## Deployment
 
@@ -81,15 +82,15 @@ The resulting model is deployed to the Google Prediction service.  Unlike most o
 no custom code is needed to invoke the model.
 
 I created a user interface using Flask that calls the API and presents prediction results when given the text of a news 
-story.  This all runs as part of a serverless Google Cloud Function.
+article.  This all runs as part of a serverless Google Cloud Function.
 
 <blockquote>
 Tokenization and the User Interface
 
-It is necessary to pre-process and tokenize user input in the same way that story data was before modeling.  The
+It is necessary to pre-process and tokenize user input in the same way that article data was before modeling.  The
 BERT tokenization routine is part of the TensorFlow 2 library.  However, there simply was not enough memory to bundle
 TensorFlow with the Google Cloud Function that serves the user interface.  I ended up making a copy
-of the tokenization code from the Github repository of Tensorflow.  This code had a single dependency on the rest
+of the tokenization code from the [Github repository](https://github.com/google-research/bert) of Tensorflow.  This code had a single dependency on the rest
 of the Tensorflow library: it used a file helper to read a file from disk.  I replaced this code with
 standard Python file reading.
 </blockquote>
@@ -107,23 +108,24 @@ the `production-api` github tag.  This allows for the UI version to be managed s
 
 ## Results
 
-Initially, I had approximately 1.5 million stories from 47 different news and opinion websites. I split the data, holding out 20 percent of the data
+Initially, I had approximately 1.5 million articles from 47 different news and opinion websites. I split the data, holding out 20 percent of the data
 for validation.  During training, the remaining data was split 80/20 into test and training data to provide 
 an idea of the accuracy of the model.  After 3 epochs of model training, the training accuracy was 66.4 percent
 and the validation accuracy was 69.9 percent.   If we were to predict the website by random, we would expect an accuracy 
  of only 2.1%, so the model is remarkably effective at prediction.  When the model was applied on the 20 percent of data
 that was not used during training, the accuracy of the predictions was 69.8 percent.  This demonstrates that the model 
-generalizes to data it has not seen quite well.
+generalizes to data it has not seen quite well.   You can follow this first attempt at modeling in 
+[this Jupyter notebook](https://github.com/metacreek/springboard/blob/master/modeling/notebooks/training.ipynb).
 
-There was a wide variation in the number of stories used per website based on what was returned from the crawling. I had
-over 110,000 stories for two websites, but less than 500 for one website and less than 1000 for three websites.  This 
+There was a wide variation in the number of articles used per website based on what was returned from the crawling. I had
+over 110,000 articles for two websites, but less than 500 for one website and less than 1000 for three websites.  This 
 variation in size of data for each prediction class is known as class imbalance and is known to
-cause problems for models, so I refined my data set to include only websites where I had at least 20,000 stories.  For 
-websites with more than 20,000 stories, I included only the 20,000 that was most recent so that I would
-have an equal number of stories for each prediction class.  This reduced the number of websites to 17.  If we were 
+cause problems for models, so I refined my data set to include only websites where I had at least 20,000 articles.  For 
+websites with more than 20,000 articles, I included only the 20,000 that was most recent so that I would
+have an equal number of articles for each prediction class.  This reduced the number of websites to 17.  If we were 
 to guess randomly, we would expect a prediction accuracy of 5.9 percent.
 
-Once again, I held out 20 percent of the data to use in estimating the accuracy of the model on
+For the second modeling attempt, the code was converted from a notebook into a Python program.  Once again, I held out 20 percent of the data to use in estimating the accuracy of the model on
 data it had never seen.   After 7 epochs of training on the new data, the
 model produced an accuracy of 72.7 percent on the training data, and 78.8 percent on the internal validation
 accuracy.  When used to make predictions on the data held out from training, the model was
@@ -154,6 +156,12 @@ The accuracy on the held out data for each website used in the model is shown be
 | 	vox.com	 | 	64.2 %	 |
 | 	washingtonexaminer.com	 | 	79.9 %	 |
 
+
+## Demonstration
+
+You can try out the prediction user interface [here](https://us-east1-topic-sentiment-269614.cloudfunctions.net/analyze-ui).  
+As noted above, if you are the first user to use it in a long while, the first submission may fail, but if you
+repeat it, it should work.
 
 ## Future directions
 
