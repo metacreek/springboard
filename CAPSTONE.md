@@ -122,39 +122,40 @@ learning, you split the data into three sets.   The test data set is not used at
 model is tuned, the test data is used to get an unbiased estimate of how well the model performs on data it
 has not seen before.   
 
-The remaining data is further split into two data, the training data and the validation data.  The training data set is 
+The remaining data is further split into two data sets; the training data and the validation data.  The training data set is 
 what is used to train the model.  The validation data is used similarly to test data to get an idea on
 how the model performs on data it hasn't seen.  However, the training and validation set is reselected for each epoch of
-model training, so any given data set might be used in training in at least one epoch.  This lets us
+model training, so any given data point might be used in training in at least one epoch.  This lets us
 get an idea of how well the model performs on new data while still using that additional data to fine tune
 the model.  The validation set is also used to tune hyperparameters that can improve model performance.
 Because of these reasons, the validation data is not truly independent of the model training, and so
 we cannot use it to get an idea of how the model performs on new data.
 
 I set aside 20 percent of my data for testing.  During training, the remaining data was split 80/20 into test and training data to provide 
-an idea of the accuracy of the model.  
+an idea of the performance of the model.  
 
-To evaluate the model, I used accuracy.  The output of the model is a distribution
+To evaluate the model, I used accuracy; that is, how often the model predicted the correct website.  The output of the model is a distribution
 of likelihoods that a given text came from a publication.  A result is considered accurate only if the most likely 
 predicted publication matches the actual publication.  After 3 epochs of model training, the training accuracy was 66.4 percent
 and the validation accuracy was 69.9 percent.   If we were to predict the website by random, we would expect an accuracy 
- of only 2.1%, so the model is remarkably effective at prediction.  When the model was applied on the 20 percent of data
+ of only 2.1%, so the model is remarkably effective at prediction.  When the model was applied on the 20 percent of test data
 that was not used during training, the accuracy of the predictions was 69.8 percent.  This demonstrates that the model 
 generalizes to data it has not seen quite well.   You can follow this first attempt at modeling in 
 [this Jupyter notebook](https://github.com/metacreek/springboard/blob/master/modeling/notebooks/training.ipynb).
 
 There was a wide variation in the number of articles used per website based on what was returned from the crawling. I had
 over 110,000 articles for two websites, but less than 500 for one website and less than 1000 for three websites.  This 
-variation in size of data for each prediction class is known as class imbalance and is known to
+variation in size of data for each prediction class is called class imbalance and is known to
 cause problems for models, so I refined my data set to include only websites where I had at least 20,000 articles.  For 
-websites with more than 20,000 articles, I included only the 20,000 that was most recent so that I would
+websites with more than 20,000 articles, I included only the 20,000 that were most recent so that I would
 have an equal number of articles for each prediction class.  This reduced the number of websites to 17.  If we were 
 to guess randomly, we would expect a prediction accuracy of 5.9 percent.
 
-For the second modeling attempt, the code was converted from a notebook into a Python program.  Once again, I held out 20 percent of the data to use in estimating the accuracy of the model on
+For the second modeling attempt, the code was converted from a notebook into a Python program.  Once again, I held out 
+20 percent of the data as test data to use in estimating the accuracy of the model on
 data it had never seen.   After 7 epochs of training on the new data, the
-model produced an accuracy of 72.7 percent on the training data, and 78.8 percent on the internal validation
-accuracy.  When used to make predictions on the data held out from training, the model was
+model produced an accuracy of 72.7 percent on the training data, and 78.8 percent accuracy on the  validation
+data.  When used to make predictions on the test data held out from training, the model was
 79.3 accurate.  This again shows that the model generalizes well to data it has not seen. It also shows 
 that having balanced classes can improve the accuracy somewhat.   This model is the version
 that is deployed for use with the UI.  
@@ -185,10 +186,11 @@ The accuracy on the held out data for each website used in the model is shown be
 
 ## Demonstration
 
+You can try out the prediction user interface [here](https://us-east1-topic-sentiment-269614.cloudfunctions.net/analyze-ui).  
+
 A screenshot of the user interface:
 ![User Interface Screenshot](./images/ui.png)
 
-You can try out the prediction user interface [here](https://us-east1-topic-sentiment-269614.cloudfunctions.net/analyze-ui).  
 As noted above, if you are the first user to use it in a long while, the first submission may fail, but if you
 repeat it, it should work.
 
@@ -207,4 +209,12 @@ perhaps some other way of taking the reported likelihood into account.
 
 I have a hunch that the freshness of the training data will affect the model accuracy, as it seems
 to perform less well with current news articles than it did back when the training data was fresh.  This should
-also be explored and it can be determined how often the training should be repeated.
+also be explored so it can be determined how often the training should be repeated.
+
+## Acknowledgments
+
+Some of the code used in this project was adapted from [this article](https://analyticsindiamag.com/bert-classifier-with-tensorflow-2-0/)
+by Amal Nair.  This article was very helpful in explaining how to set up data for TensorFlow.
+
+I also wish to thank my Springboard mentor, [Srdjan Santic](https://www.linkedin.com/in/srdjansantic/), for the 
+essential guidance, encouragement, and help he provided throughout all stages of this project.
