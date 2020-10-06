@@ -5,6 +5,8 @@ project involved the full lifecycle of data collection, analysis, wrangling, and
 The project adapts a Bert-based model to be used for classification of text from 
 dozens of publicans.  It was built using both AWS and Google Cloud.
 
+For an explanation of the capstone project, click [here]("./CAPSTONE.md"). 
+
 * [data-collection](https://github.com/metacreek/springboard/tree/master/data-collection) contains code used to crawl dozens of news and opinion websites.
 
 * [data-wrangling](https://github.com/metacreek/springboard/tree/master/data-wrangling) contains Jupyter notebooks outlining evaluation of the collected data and analysis use to wrangle the data into a usable format.
