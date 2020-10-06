@@ -30,7 +30,7 @@ against the data to see common identifying phrases.
 Stop words were also removed from the content, as it seemed to help with the final model.
 
 #### BERT
-In recent years, new models have been developed to greatly improve the abilities to perform natural
+In recent years, new models have been developed to greatly improve the capabilities of computers to perform natural
 language processing (NLP).  One of these models, known 
 as [BERT](https://ai.googleblog.com/2018/11/open-sourcing-bert-state-of-art-pre.html), was released by Google in 2018.  BERT stands
 for Bidirectional Encoder Representations from Transformers.  In general, NLP techniques require turning words into
@@ -39,7 +39,7 @@ what the next word will be based on the preceding words.  BERT attempts to predi
 the word based on the words before **and after** a given word, which is why it is called bidirectional.
 
 What makes BERT so powerful is that even though it was trained on a large quantity of general purpose text, we can
-fine-tune it to use it on a particular use case.   For my capstone, I add a trainable layer at the end of the BERT model.
+fine tune it to use it on a particular use case.   For my capstone, I add a trainable layer at the end of the BERT model.
 This additional layer is used to train against the news articles I collected, and it is set up to predict
 the source of the news articles based on the body text.   This makes the computational effort to achieve this
 task much less than it would be if we started from scratch.   The general purpose nature of the BERT model means
@@ -48,18 +48,21 @@ with training.
 
 The BERT model contains a tokenizer which converts words into numbers based on a complex set of rules.   This tokenizer
 is used in my wrangling code to convert the text for the news articles into numbers.  Note that only the first 256 tokens for
-a news article is used in the modeling.
+a news article are used in the modeling.
 
-The tokenized data is fed into my model, which contains the BERT model, plus an extra layer for fine tuning
+The tokenized data is fed into my model, which contains the BERT model, plus the extra layer for fine tuning
 for my data set.   There are many different versions of the BERT model with various sizes available for
-particular use cases.  I made use of the BERT-Base model, which consists of a 12 hidden layers with 768 nodes. To this,
-I added a dropout layer with dropout rate set to 20 percent.  The dropout layer zeros out the results from randomly selected
+particular use cases.  I made use of the BERT-Base model, which consists of a 12 hidden layers with 768 nodes. 
+
+To this, I added my extra layer.   The extra layer consists of three parts:
+* a dropout layer with dropout rate set to 20 percent.  The dropout layer zeros out the results from randomly selected
 nodes.  This is done to add some randomness to the model so that it will generalize better to data it has never seen.  Without this,
 the model could become overly fitted to the data used in training, causing it to perform worse
- on data it has never seen.  The dropout layer connects to a dense
-layer with 1024 nodes.  This layer is where the the fine-tuning is captured during training; the BERT layers are frozen and
-are not adjusted as part of training.   This makes the training much faster than trying to train the entire model.  This layer
-is then connected to a "softmax" output layer that has nodes corresponding to the websites used in training.  The 
+ on data it has never seen.  
+* a dense
+layer with 1024 nodes.  This layer is where the bulk of the fine-tuning is captured during training; the BERT layers are frozen and
+are not adjusted as part of training.   This makes the training much faster than trying to train the entire model.  
+* a "softmax" output layer that has nodes corresponding to each of the websites used in training.  The 
 softmax layer causes the sum of the outputs of all nodes to equal 1.  This lets us treat each node output as the percentage
 likelihood that a given news article came from the corresponding website.
 
@@ -74,13 +77,14 @@ The rest of the architecture runs on Google Cloud.  I would not normally archite
 between two clouds without a good reason.  In this case, I found that many of the tools I needed were easier to
 use on Google Cloud than on AWS.  For example, PySpark was easier to run and debug using Google Dataproc than using AWS 
 EMR.  I also had a large free credit on GCP which covered a lot of my project costs.  I decided to leave
-the system as a two cloud system to show that I am comfortable on both platforms.
+the system as a two-cloud system to show that I am comfortable on both platforms.
 
 Data cleanup, wrangling, and feature preparation including tokenization is run using PySpark via Google Dataproc. As 
 this step involves the most custom calculations, it also includes the most test coverage.
 
-Modeling is run on an instance of Google Compute that has Tensorflow 2 installed.  The model instance also made use
-of a NVidia GPU to speed the calculations required.
+Modeling is run on an instance of Google Compute that has TensorFlow 2 installed.  The model is defined using the Keras 
+interface to TensorFlow.  The model instance made use
+of a NVidia GPU to reduce the running time required.
 
 The resulting model is deployed to the Google Prediction service.  Unlike most other aspects of the system,
 no custom code is needed to invoke the model.
@@ -94,8 +98,8 @@ Tokenization and the User Interface
 It is necessary to pre-process and tokenize user input in the same way that article data was before modeling.  The
 BERT tokenization routine is part of the TensorFlow 2 library.  However, there simply was not enough memory to bundle
 TensorFlow with the Google Cloud Function that serves the user interface.  I ended up making a copy
-of the tokenization code from the [Github repository](https://github.com/google-research/bert) of Tensorflow.  This code had a single dependency on the rest
-of the Tensorflow library: it used a file helper to read a file from disk.  I replaced this code with
+of the tokenization code from the [Github repository](https://github.com/google-research/bert) of TensorFlow.  This code had a single dependency on the rest
+of the TensorFlow library: it used a file helper to read a file from disk.  I replaced this code with
 standard Python file reading.
 </blockquote>
 
@@ -107,16 +111,31 @@ time out and fail the first time it is used in a while.  In such situations, the
 resubmitted on the page to return results quickly.
 
 The data wrangling, modeling, and UI deployment and execution is all managed using Google Clould Composer, a hosted
-version Apache Airflow.     Google Composer will use the version of the User Interface code that is tagged with
+version [Apache Airflow](https://airflow.apache.org/).     Google Composer will use the version of the User Interface code that is tagged with
 the `production-api` github tag.  This allows for the UI version to be managed separately from other repository versions.
 Throughout the lifecycle, Google buckets are used to store artifacts and results.
 
 ## Results
 
-Initially, I had approximately 1.5 million articles from 47 different news and opinion websites. I split the data, holding out 20 percent of the data
-for validation.  During training, the remaining data was split 80/20 into test and training data to provide 
-an idea of the accuracy of the model.  To evaluate the model, I used accuracy.  The output of the model is a distribution
-of likelihoods that a given text came from a publication.  An result is considered accurate only if the most likely 
+Initially, I had approximately 1.5 million articles from 47 different news and opinion websites. Typically with machine
+learning, you split the data into three sets.   The test data set is not used at all in training the model.  After the 
+model is tuned, the test data is used to get an unbiased estimate of how well the model performs on data it
+has not seen before.   
+
+The remaining data is further split into two data, the training data and the validation data.  The training data set is 
+what is used to train the model.  The validation data is used similarly to test data to get an idea on
+how the model performs on data it hasn't seen.  However, the training and validation set is reselected for each epoch of
+model training, so any given data set might be used in training in at least one epoch.  This lets us
+get an idea of how well the model performs on new data while still using that additional data to fine tune
+the model.  The validation set is also used to tune hyperparameters that can improve model performance.
+Because of these reasons, the validation data is not truly independent of the model training, and so
+we cannot use it to get an idea of how the model performs on new data.
+
+I set aside 20 percent of my data for testing.  During training, the remaining data was split 80/20 into test and training data to provide 
+an idea of the accuracy of the model.  
+
+To evaluate the model, I used accuracy.  The output of the model is a distribution
+of likelihoods that a given text came from a publication.  A result is considered accurate only if the most likely 
 predicted publication matches the actual publication.  After 3 epochs of model training, the training accuracy was 66.4 percent
 and the validation accuracy was 69.9 percent.   If we were to predict the website by random, we would expect an accuracy 
  of only 2.1%, so the model is remarkably effective at prediction.  When the model was applied on the 20 percent of data
