@@ -7,6 +7,8 @@ dozens of publicans.  It was built using both AWS and Google Cloud.
 
 For a description of the capstone project, click [here](https://github.com/metacreek/springboard/tree/master/CAPSTONE.md). 
 
+Components of this project are contained in these subdirectories:
+
 * [airflow](https://github.com/metacreek/springboard/tree/master/airflow) contains code to use with Google Cloud Composer,
 which is a hosted version of Apache Airflow.  This code manages the running of data wrangling, and
 model and user interface deployment.
