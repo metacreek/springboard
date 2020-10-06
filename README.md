@@ -5,7 +5,7 @@ project involved the full lifecycle of data collection, analysis, wrangling, and
 The project adapts a Bert-based model to be used for classification of text from 
 dozens of publicans.  It was built using both AWS and Google Cloud.
 
-For an description of the capstone project, click [here](https://github.com/metacreek/springboard/tree/master/CAPSTONE.md). 
+For a description of the capstone project, click [here](https://github.com/metacreek/springboard/tree/master/CAPSTONE.md). 
 
 * [airflow](https://github.com/metacreek/springboard/tree/master/airflow) contains code to use with Google Cloud Composer,
 which is a hosted version of Apache Airflow.  This code manages the running of data wrangling, and
