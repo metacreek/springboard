@@ -10,8 +10,9 @@ or opinion article from the web based only on the text of the article.
 
 ## Process
 For training data, I crawled several news and opinion websites using an open-source
-crawling tool named [News Please](https://github.com/fhamborg/news-please).  The crawled data was loaded into Spark, where I
-performed several analyses on the data so that I could determine how to clean and wrangle
+crawling tool named [News Please](https://github.com/fhamborg/news-please).  The crawled data was loaded into Spark, 
+where I
+performed several analyses on the data to determine how to clean and wrangle
 the data for my project.   Some websites were eliminated at this stage because crawling
 returned a very small number of articles.  I also discovered
 that the returned articles would vary for some sites based on the user agent, so I refined
@@ -55,14 +56,14 @@ for my data set.   There are many different versions of the BERT model with vari
 particular use cases.  I made use of the BERT-Base model, which consists of a 12 hidden layers with 768 nodes. 
 
 To this, I added my extra layer.   The extra layer consists of three parts:
-* a dropout layer with dropout rate set to 20 percent.  The dropout layer zeros out the results from randomly selected
+* a dropout layer with dropout rate set to 20 percent.  The dropout layer zeroes out the results from randomly selected
 nodes.  This is done to add some randomness to the model so that it will generalize better to data it has never seen.  Without this,
 the model could become overly fitted to the data used in training, causing it to perform worse
  on data it has never seen.  
 * a dense
 layer with 1024 nodes.  This layer is where the bulk of the fine-tuning is captured during training; the BERT layers are frozen and
 are not adjusted as part of training.   This makes the training much faster than trying to train the entire model.  
-* a "softmax" output layer that has nodes corresponding to each of the websites used in training.  The 
+* a "softmax" output layer that has a node for each of the websites used in training data.  The 
 softmax layer causes the sum of the outputs of all nodes to equal 1.  This lets us treat each node output as the percentage
 likelihood that a given news article came from the corresponding website.
 
@@ -70,8 +71,9 @@ likelihood that a given news article came from the corresponding website.
 
 ![Architecture](./images/architecture.png)
 
-Data collection was run as a Python program on an Amazon EC2 instance, with results stored on S3.  (I have since converted
-the data collection code to run inside a Docker container for greater portability.)  
+Data collection was run as a Python program on an Amazon EC2 instance, with results stored in S3.  All the data I 
+collected was captured using this setup, but I have since converted
+the data collection code to run inside a Docker container for greater portability.  
 
 The rest of the architecture runs on Google Cloud.  I would not normally architect a system to be split
 between two clouds without a good reason.  In this case, I found that many of the tools I needed were easier to
@@ -79,18 +81,21 @@ use on Google Cloud than on AWS.  For example, PySpark was easier to run and deb
 EMR.  I also had a large free credit on GCP which covered a lot of my project costs.  I decided to leave
 the system as a two-cloud system to show that I am comfortable on both platforms.
 
-Data cleanup, wrangling, and feature preparation including tokenization is run using PySpark via Google Dataproc. As 
+Data cleanup, wrangling, and feature preparation including tokenization is run using PySpark via 
+[Google Dataproc](https://cloud.google.com/dataproc). As 
 this step involves the most custom calculations, it also includes the most test coverage.
 
-Modeling is run on an instance of Google Compute that has TensorFlow 2 installed.  The model is defined using the Keras 
+Modeling is run on an instance of [Google Compute](https://cloud.google.com/compute) that 
+has [TensorFlow 2](https://www.tensorflow.org/) installed.  The model is defined using the Keras 
 interface to TensorFlow.  The model instance made use
 of a NVidia GPU to reduce the running time required.
 
 The resulting model is deployed to the Google Prediction service.  Unlike most other aspects of the system,
 no custom code is needed to invoke the model.
 
-I created a user interface using Flask that calls the API and presents prediction results when given the text of a news 
-article.  This all runs as part of a serverless Google Cloud Function.
+I created a user interface using [Flask](https://flask.palletsprojects.com/en/1.1.x/) 
+that calls the API and presents prediction results when given the text of a news 
+article.  This all runs as part of a serverless [Google Cloud Function](https://cloud.google.com/functions).
 
 <blockquote>
 Tokenization and the User Interface
@@ -104,43 +109,44 @@ standard Python file reading.
 </blockquote>
 
 There are some time-consuming operations that must be performed when the prediction UI is invoked for the first time 
-in a while.  In a true production system, some sort of pooling mechanism would be used to make sure this initialization 
+in a while.  In a production system, I would enable "warm instances" that would 
+make it likely this initialization 
 has already been performed before an end-user uses the system.   However, that would involve
 costs I do not wish to incur for my demonstration system.   Therefore, the UI will sometimes
 time out and fail the first time it is used in a while.  In such situations, the prediction request can be
 resubmitted on the page to return results quickly.
 
-The data wrangling, modeling, and UI deployment and execution is all managed using Google Clould Composer, a hosted
-version [Apache Airflow](https://airflow.apache.org/).     Google Composer will use the version of the User Interface code that is tagged with
+The data wrangling, modeling, and UI deployment and execution is all managed 
+using [Google Clould Composer](https://cloud.google.com/composer),
+a hosted version [Apache Airflow](https://airflow.apache.org/). Google Composer will use the version of the User 
+Interface code that is tagged with
 the `production-api` github tag.  This allows for the UI version to be managed separately from other repository versions.
 Throughout the lifecycle, Google buckets are used to store artifacts and results.
 
 ## Results
 
-Initially, I had approximately 1.5 million articles from 47 different news and opinion websites. Typically with machine
-learning, you split the data into three sets.   The test data set is not used at all in training the model.  After the 
-model is tuned, the test data is used to get an unbiased estimate of how well the model performs on data it
+Initially, I had approximately 1.5 million articles from 47 different news and opinion websites. I saved
+20 percent of the data to be `test data`, which is never involved in training the model in any way. I use
+ the test data to get an unbiased estimate of how well the model will perform on new data it
 has not seen before.   
 
-The remaining data is further split into two data sets; the training data and the validation data.  The training data set is 
-what is used to train the model.  The validation data is used similarly to test data to get an idea on
-how the model performs on data it hasn't seen.  However, the training and validation set is reselected for each epoch of
-model training, so any given data point might be used in training in at least one epoch.  This lets us
-get an idea of how well the model performs on new data while still using that additional data to fine tune
-the model.  The validation set is also used to tune hyperparameters that can improve model performance.
-Because of these reasons, the validation data is not truly independent of the model training, and so
-we cannot use it to get an idea of how the model performs on new data.
-
-I set aside 20 percent of my data for testing.  During training, the remaining data was split 80/20 into test and training data to provide 
-an idea of the performance of the model.  
+The remaining data is further split 80/20 into `training data` and `validation data`.  The training data is 
+used to train the model. 
+The validation data is used similarly to test data to get an idea on
+how the model performs on data it hasn't seen.  
+This random split into these two sets
+is repeated on each new iteration through the data (known as an epoch), so many data points may be
+training data on some iterations and validation data on others.
+This allows us to use all of this data to improve
+the model, while still making sure the model will generalize well to new data. 
 
 To evaluate the model, I used accuracy; that is, how often the model predicted the correct website.  The output of the model is a distribution
 of likelihoods that a given text came from a publication.  A result is considered accurate only if the most likely 
 predicted publication matches the actual publication.  After 3 epochs of model training, the training accuracy was 66.4 percent
-and the validation accuracy was 69.9 percent.   If we were to predict the website by random, we would expect an accuracy 
+and the validation accuracy was 69.9 percent.   With 47 websites, if we were to predict the website by random, we would expect an accuracy 
  of only 2.1%, so the model is remarkably effective at prediction.  When the model was applied on the 20 percent of test data
 that was not used during training, the accuracy of the predictions was 69.8 percent.  This demonstrates that the model 
-generalizes to data it has not seen quite well.   You can follow this first attempt at modeling in 
+generalizes quite well to new data.  You can follow this first attempt at modeling in 
 [this Jupyter notebook](https://github.com/metacreek/springboard/blob/master/modeling/notebooks/training.ipynb).
 
 There was a wide variation in the number of articles used per website based on what was returned from the crawling. I had
@@ -148,7 +154,7 @@ over 110,000 articles for two websites, but less than 500 for one website and le
 variation in size of data for each prediction class is called class imbalance and is known to
 cause problems for models, so I refined my data set to include only websites where I had at least 20,000 articles.  For 
 websites with more than 20,000 articles, I included only the 20,000 that were most recent so that I would
-have an equal number of articles for each prediction class.  This reduced the number of websites to 17.  If we were 
+have an equal number of articles for each prediction class.  This reduced the number of websites to 17, so if we were 
 to guess randomly, we would expect a prediction accuracy of 5.9 percent.
 
 For the second modeling attempt, the code was converted from a notebook into a Python program.  Once again, I held out 
@@ -160,7 +166,7 @@ data.  When used to make predictions on the test data held out from training, th
 that having balanced classes can improve the accuracy somewhat.   This model is the version
 that is deployed for use with the UI.  
 
-The accuracy on the held out data for each website used in the model is shown below:
+The accuracy on the test data for each website used in the model is shown below:
 
 | 	Website	 | 	Accuracy	 |
 | 	----------------------	 | 	-----------------:	 |
@@ -194,11 +200,11 @@ A screenshot of the user interface:
 As noted above, if you are the first user to use it in a long while, the first submission may fail, but if you
 repeat it, it should work.
 
-The user interface with present up to three guesses for the publication source, along with a percentage
+The user interface will present up to three guesses for the publication source, along with a percentage
 of likelihood that the document came from the given publication.  Publications with a less than 10 percent
 likelihood of being the source are not shown.
 
-## Future directions
+## Future Directions
 
 I did some mild experiments with the dropout rate used in the model, along
 with the number of additional hidden layers and their sizes before settling on

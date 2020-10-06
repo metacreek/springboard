@@ -62,7 +62,7 @@ this project.
 ## Wrangling workflow
 
 The workflow 'capstone_workflow_wrangling' does data cleaning and wrangling.  It also tokenizes the data to prepare it for use in modeling. 
-This DAG provisions a Spark environment, rungs the cleaning and wrangling functions, and then shuts down Spark.
+This DAG provisions a Spark environment, runs the cleaning and wrangling program, and then deletes the Spark environment.
 
 Normally, this would be run on some schedule, but for the purposes of this project you will trigger it manually by clicking the first button
 in the links column of the Airflow DAGs page.
@@ -97,5 +97,5 @@ execution of the workflow can be monitored similarly to what was done with the w
 ## Environment cleanup
 
 Once the deploy workflow is done, the Composer environment can be deleted.  To do this,
-go to the Composer environment tab and click the check box next tot the springboard-capstone-project environment.  Then click the Delete
+go to the Composer environment tab and click the check box next to the springboard-capstone-project environment.  Then click the Delete
 button near the top middle of the tab.
