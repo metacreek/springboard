@@ -1,11 +1,14 @@
-# Document Classification Using a Fine-tuned BERT Model
+# Document Classification Using a Fine-Tuned BERT Model
 
-![User Interface](./images/ui.png)
+![Neural Net](./images/neural.jpg)
 
+## Goal
 For my capstone project, I created a system to handle the full lifecycle for 
 training and serving a model that attempts to determine the source of a news
 or opinion article from the web based only on the text of the article.  
 
+
+## Process
 For training data, I crawled several news and opinion websites using an open-source
 crawling tool named [News Please](https://github.com/fhamborg/news-please).  The crawled data was loaded into Spark, where I
 performed several analyses on the data so that I could determine how to clean and wrangle
@@ -26,6 +29,7 @@ against the data to see common identifying phrases.
 
 Stop words were also removed from the content, as it seemed to help with the final model.
 
+#### BERT
 In recent years, new models have been developed to greatly improve the abilities to perform natural
 language processing (NLP).  One of these models, known 
 as [BERT](https://ai.googleblog.com/2018/11/open-sourcing-bert-state-of-art-pre.html), was released by Google in 2018.  BERT stands
@@ -105,12 +109,15 @@ resubmitted on the page to return results quickly.
 The data wrangling, modeling, and UI deployment and execution is all managed using Google Clould Composer, a hosted
 version Apache Airflow.     Google Composer will use the version of the User Interface code that is tagged with
 the `production-api` github tag.  This allows for the UI version to be managed separately from other repository versions.
+Throughout the lifecycle, Google buckets are used to store artifacts and results.
 
 ## Results
 
 Initially, I had approximately 1.5 million articles from 47 different news and opinion websites. I split the data, holding out 20 percent of the data
 for validation.  During training, the remaining data was split 80/20 into test and training data to provide 
-an idea of the accuracy of the model.  After 3 epochs of model training, the training accuracy was 66.4 percent
+an idea of the accuracy of the model.  To evaluate the model, I used accuracy.  The output of the model is a distribution
+of likelihoods that a given text came from a publication.  An result is considered accurate only if the most likely 
+predicted publication matches the actual publication.  After 3 epochs of model training, the training accuracy was 66.4 percent
 and the validation accuracy was 69.9 percent.   If we were to predict the website by random, we would expect an accuracy 
  of only 2.1%, so the model is remarkably effective at prediction.  When the model was applied on the 20 percent of data
 that was not used during training, the accuracy of the predictions was 69.8 percent.  This demonstrates that the model 
@@ -159,15 +166,25 @@ The accuracy on the held out data for each website used in the model is shown be
 
 ## Demonstration
 
+A screenshot of the user interface:
+![User Interface Screenshot](./images/ui.png)
+
 You can try out the prediction user interface [here](https://us-east1-topic-sentiment-269614.cloudfunctions.net/analyze-ui).  
 As noted above, if you are the first user to use it in a long while, the first submission may fail, but if you
 repeat it, it should work.
+
+The user interface with present up to three guesses for the publication source, along with a percentage
+of likelihood that the document came from the given publication.  Publications with a less than 10 percent
+likelihood of being the source are not shown.
 
 ## Future directions
 
 I did some mild experiments with the dropout rate used in the model, along
 with the number of additional hidden layers and their sizes before settling on
 the final model I used.  These could be explored further as ways of improving the accuracy.
+The number of tokens used in training (256) could also be adjusted up and down.  It would also
+be interesting to broaden the measure of accuracy to consider the top three predicted publications, or
+perhaps some other way of taking the reported likelihood into account.
 
 I have a hunch that the freshness of the training data will affect the model accuracy, as it seems
 to perform less well with current news articles than it did back when the training data was fresh.  This should
